@@ -1,0 +1,745 @@
+---
+title: "Social Network Analysis"
+subtitle: "Session 01<br/>Data Structures"
+author: "Meltem Odabaş"
+institute: "Pew Research Center"
+date: "2021-10-26 <br/>(updated: `r Sys.Date()`)"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+
+#install.packages("tidyverse")
+#install.packages("igraph")
+
+library(tidyverse)
+library(igraph)
+library(mltools)
+library(data.table)
+library(network)
+```
+
+
+class: inverse, center, middle
+
+# Why Social Network Analysis?
+
+---
+
+# Why Social Network Analysis?
+
+- Social relations and institutional connections shape our attitudes and behaviors
+
+---
+
+# Why Social Network Analysis?
+
+- Social relations and institutional connections shape our attitudes and behaviors
+
+- Allows researchers to do micro, meso and macro-level analyses:
+
+  + __*micro-level*__ e.g. individuals and their dyadic relationships
+  + __*meso-level*__ e.g. inter- and intra- organizational networks; social groups
+  + __*macro-level*__ e.g. large-scale and complex networks; community structures
+
+---
+
+class: inverse, center, middle
+
+# What types of information do social network graphs contain?
+
+---
+
+```{r relational, echo=FALSE, fig.align = 'center', fig.height= 6}
+set.seed=456
+M1 = matrix(c("Mr. Collins","Lizzie Bennett",
+              "Lizzie Bennett","Mr. Darcy",
+              "Mr. Darcy", "Lizzie Bennett"), 
+            ncol = 2, byrow = T)
+g1 = graph_from_edgelist(M1, directed = FALSE)
+l1 = layout_in_circle(g1)
+V(g1)$size = 40
+plot(g1, layout = l1, edge.curved = 0)
+```
+
+Persons are represented in circle, referred to as "nodes" or "vertexes";
+
+Relations are represented with lines, referred to as "ties" or "edges".
+
+---
+
+```{r relational-undirected, echo=FALSE, fig.align = 'center', fig.height= 6}
+g2 = graph_from_edgelist(M1)
+V(g2)$size = 40
+plot(g2, layout = l1, edge.curved = .1)
+```
+
+Relations can be **directed** (Mr. Collins is fond of Elizabeth may be, but she certainly not reciprocate the feeling!)
+---
+
+```{r relational-undirected-weight, echo=FALSE, fig.align = 'center', fig.height= 6}
+E(g2)$width = c(2,5,2)
+plot(g2, layout = l1, edge.curved = .1)
+```
+
+These "feelings" may be **strong**, or **weak**:
+
+*Edges can take ordinal attributes.*
+---
+
+
+```{r relational-undirected-type, echo=FALSE, fig.align = 'center', fig.height= 6}
+E(g2)$type = c("love","hate","love")
+E(g2)$color <- "red"
+E(g2)$color[E(g2)$type == "love"] <- "green"
+plot(g2, layout = l1, edge.curved = .1)
+
+legend(x=.8,y=-0.3, c("hate", "love"), lty = 1, 
+       col = c("red","green"), 
+       pt.cex=2, cex=1, bty="n", ncol=1)
+```
+
+But does Lizzy love Mr. Darcy?!? 
+
+Not when Mr. Darcy thinks "she is tolerable"; but then for some reason turns full 180!
+
+*Edges can take cardinal attributes*: such as **love** vs. **hate**.
+
+---
+
+```{r node-attribute, echo=FALSE, fig.align = 'center', fig.height= 6}
+V(g2)$color = c("yellow","light blue","yellow")
+V(g2)$size = c(5, 3.5, 10) * 4
+plot(g2, layout=l1, edge.curved = .1)
+
+legend(x=.8,y=-0.3, c("hate", "love"), lty = 1, 
+       col = c("red","green"), 
+       pt.cex=2, cex=1, bty="n", ncol=1)
+
+legend(x=.9,y=-.8, c("female", "male"), pch = 21, 
+       col = "#777777", 
+       pt.bg = c("light blue","yellow"), 
+       pt.cex=2, cex=1, bty="n", ncol=1)
+
+legend(x=.9,y=-1.3, c("wealth (logged)", "", ""), pch = 21, 
+       col = "#777777", 
+       pt.bg = c("black","black"), 
+       pt.cex=c(1, 2, 3), cex=1, bty="n", ncol=1)
+```
+
+*Not only edges but nodes/vertexes can take both ordinal and cardinal attributes:*
+
+**Wealth** is ordinal and **Gender** (in Jane Austen's 1813 Western world!) is cardinal.
+
+(As you might know, Mr. Darcy earns 10,000 a year...)
+---
+
+class: inverse, center, middle
+
+# Network Graphs and Data Structures
+
+---
+
+## Network Graphs and Data Structures
+
+So far, we have seen three groups of datasets:
+
+- Relational data (represented in edges/ties drawn across nodes)
+
+- Attributes of the edges
+
+- Attributes of the vertices
+
+Graph objects in R will always request relational data; attribute data (either of edges or vertices) is rather optional. 
+
+
+---
+
+## Network Graphs and Data Structures (cont'd)
+
+
+If we are adding all three types of data, the R graph object will request:
+
+- Relational data and edge attributes as in one dataset (which I will shortly call as **"Relational data"**; but keep in mind that edge attributes go in this one as well)
+
+- Node attribute data in a separate dataset. (which I will shortly call as **"Vertex/node attribute data"**)
+
+---
+class: inverse, center, middle
+
+# 1- Relational Data Structure
+
+---
+
+## Relational Data structures
+
+There are two ways to represent relational data: 
+
+- **Matrix notation**, 
+
+- Edgelist Notation.
+
+---
+## Relational data in the form of Matrix notation
+
+Below is a Krackhardt's (1999) small hi-tech computer firm dataset. It looks at 36 employees and managers from the firm and their friendship ties.
+
+```{r flo-matrix} 
+bucket = "/Users/meltemodabas/github/meltemod/workshops/SNA/01-data-structure"
+options(width = 60)
+M = read.table(file.path(bucket, "data","Hi-tech_sociomatrix.txt"),
+                 header=TRUE,row.names=1)
+M
+```
+
+---
+
+
+You can also work with sparse matrices:
+
+```{r flo-sparse-matrix}
+tmp = as.data.table(M)
+M_sp = sparsify(tmp)
+M_sp
+```
+
+
+---
+
+```{r reprint-matrix} 
+dim(M) #36x36 matrix
+all.equal(rownames(M),colnames(M)) #rownames and colnames are equal
+isSymmetric(as.matrix(M)) #not symmetric; not all ties are reciprocated.
+```
+What we have is called an **adjacency matrix**: a square matrix that represents a finite graph. 
+
+The employee names are the "nodes," and friendships are defined as connections from one employee to another. 
+---
+
+
+## Using adjacency matrix to create a graph object
+
+There are various packages to work with network graphs, such as: 
+
+- `igraph`
+- `sna`
+- `network`
+
+I am more familiar with igraph, so this is what I will use for this tutorial. Needless to say, feel free to explore other packages on your spare time.
+
+
+
+---
+
+## Using adjacency matrix to create a graph object
+
+Ok, once we have our matrix (or sparse matrix!) ready, we can simply create a graph object (or, "igraph object"!) using igraph package. 
+
+```{r create-graph-hitech}
+g_hitech = graph_from_adjacency_matrix(M_sp)
+g_hitech
+```
+This is a **directed network** (`DN`) of 36 vertices and 147 edges. There is one vertex attribute in this graph called **name** (`attr: name(v/c)`) in character format. This attribute comes from the row and column names assigned.
+---
+
+In each igraph object, you can see the list of edges by using **`E(graph)`** function, and list of vertices by typing `V(graph)` function:
+
+```{r see-graph-edges}
+E(g_hitech)
+```
+
+---
+
+
+In each igraph object, you can see the list of edges by using `E(graph)` function, and list of vertices by typing **`V(graph)`** function:
+
+```{r see-graph-vertices}
+V(g_hitech)
+```
+
+To list an attribute by itself, such as the vertex attribute `name(v/c)`, use the dollar sign (in base R):
+
+```{r see-graph-vertice-attr}
+V(g_hitech)$name
+```
+---
+Let's plot the network graph:
+
+```{r plot-graph-medici, , fig.height= 8.5}
+l = layout.fruchterman.reingold(g_hitech)
+plot(g_hitech, vertex.size = 10, layout = l)
+```
+---
+
+Although not all ties are reciprocated in this graph,, we can rather set the igraph as "undirected"
+
+```{r create-undirected-graph-medici, fig.height= 9}
+g_hitech_und = graph_from_adjacency_matrix(M_sp, mode = "undirected")
+g_hitech_und
+```
+
+Let's read the information: `g_medici_und` is an **undirected network** (`UN`) of 36 vertices and **91** edges (not 147!).
+
+---
+
+Plotting the graph, we see:
+
+```{r plot-undirected-graph-medici, fig.height= 9}
+plot(g_hitech_und, vertex.size = 10, layout = l)
+```
+---
+
+It is possible to assign tie weights to matrices: rather than using 0-1 dichotomy, you may assign values between [0-Z], where Z is a reel number.
+
+Although the original dataset does not have weights for friendships, we can make up our own values (just for the sake of practicing!) I will replace the cells that are equal to 1 to a randomly selected list of values ranging across 1 and 5
+
+```{r add-weights-to-graph-medici}
+M_sp[M_sp == 1] #prints all the values in flo_sp that equal to 1
+length(M_sp[M_sp == 1]) #147 ties
+```
+---
+```{r add-weights-to-graph-medici-contd}
+random_values = sample(c(1:5), length(M_sp[M_sp == 1]), replace = T) #get 147 randomly seleccted constant numbers ranging from 1 to 5
+random_values
+M_sp_weighted = M_sp #create a new sparse matrix
+M_sp_weighted[M_sp_weighted == 1] <- random_values 
+#assign these random values to existing ties
+```
+---
+```{r add-weights-to-graph-medici-contd2}
+M_sp_weighted
+```
+
+---
+Let's create a new graph with this weighted matrix:
+
+```{r create-weighted-medici-graph}
+g_hitech_weighted = graph_from_adjacency_matrix(M_sp_weighted, 
+                                                mode = "directed", weighted = TRUE)
+g_hitech_weighted
+```
+
+`g_hitech_weighted` is a **directed and weighted graph** with 36 vertices and 147 ties.
+
+The graph has now two attributes: An edge attribute called **weight** (`weight (e/n)`) in numeric format and a vertex attribute called *name*(`name (v/c)`) in character format.
+
+
+---
+
+Let's plot this new graph:
+
+```{r plot-weighted-medici-graph, fig.height= 7}
+plot(g_hitech_weighted,      
+     edge.width = E(g_hitech_weighted)$weight, #use edge weight attr to edge width
+     edge.curved = .5, #curve the edges 
+     vertex.size = 5, 
+     layout = l)
+```
+
+---
+Ok, this got a bit cluttered. 
+
+---
+We could instead make up "friend" vs. "enemy" ties; assigning 1 foor friend and -1 for enemy:
+
+We could also create a love-hate matrix: by only using values of +1 or -1 for existing ties.
+
+```{r add-hate-to-graph-medici}
+random_values_v2 = sample(c(1,-1), length(M_sp[M_sp == 1]), replace = T) #randomly select -1 or 1
+random_values_v2
+M_sp_hatred = M_sp #create a new sparse matrix
+M_sp_hatred[M_sp_hatred == 1] <- random_values_v2 
+#assign these random values to existing ties in flo_sp
+```
+---
+```{r add-hate-to-graph-contd}
+M_sp_hatred
+```
+---
+rather than using the edge weights, let's use colors to define "love" and "hate" this time:
+
+```{r plot-hate-to-graph-medici}
+#for all ties, first assign the color red, which is for hate.
+edge_colors = rep("red", length(M_sp[M_sp == 1]))
+edge_colors
+#change the value to "green" where random_values_v2 equals 1
+edge_colors[random_values_v2 == 1] = "green" 
+edge_colors
+random_values_v2
+
+
+g_hitech_hatred = graph_from_adjacency_matrix(M_sp_hatred, 
+                                                mode = "directed", weighted = TRUE)
+```
+---
+```{r plot-hate-to-graph-contd}
+plot(g_hitech_hatred, 
+     edge.color = edge_colors,
+     edge.curved = .5,
+     vertex.size = 5,
+     layout = l)
+```
+---
+
+## Relational Data structures
+
+There are two ways to represent relational data: 
+
+- Matrix notation, 
+
+- **Edgelist Notation**.
+
+---
+## Relational data in the form of Edgelist notation
+
+Below is a Krackhardt's (1999) small hi-tech computer firm dataset. It looks at 36 employees and managers from the firm and their friendship ties.
+
+```{r flo-edgelist} 
+df_edgelist = fread( # read data as data.table
+  file.path(bucket, "data","Hi-tech_edgelist.csv"))
+df_edgelist
+```
+
+---
+
+We can also add our artificially-made "friendship weight" and "friend vs. enemy" edge attributes as separate columns to the edgelist:
+
+```{r flo-edgelist-attributes} 
+df_edgelist[, weight:= random_values]
+df_edgelist[, frenemy:= random_values_v2]
+df_edgelist
+```
+---
+
+Next is to use the edgelist to generate an igraph object:
+
+```{r flo-graph-from-edgelist} 
+g_hitech_from_edgelist = graph_from_data_frame(df_edgelist, directed = TRUE)
+g_hitech_from_edgelist
+```
+
+This is a directed and weighted graph (DNW) with *33* (not 36!) vertices and 147 ties. Why do you think we missed 3 out of 36 vertices?
+
+---
+
+Next is to use the edgelist to generate an igraph object:
+
+```{r flo-graph-from-edgelist-contd} 
+g_hitech_from_edgelist = graph_from_data_frame(df_edgelist, directed = TRUE)
+g_hitech_from_edgelist
+```
+
+This is a directed and weighted graph (DNW) with *33* (not 36!) vertices and 147 ties. Why do you think we missed 3 out of 36 vertices? **Because we had 3 isolate vertices (i.e., with no ties).** This does not mean we cannot register isolate nodes with edgelist datasets, however. I will come to that.
+
+---
+```{r plot-hate-to-graph-contd-again}
+plot(g_hitech_hatred, 
+     edge.color = edge_colors,
+     edge.curved = .5,
+     vertex.size = 5,
+     layout = l)
+```
+
+---
+Next is to use the edgelist to generate an igraph object:
+
+```{r flo-graph-from-edgelist-contd2} 
+g_hitech_from_edgelist
+```
+
+This graph has three network attributes: 
+- names at vertex level in character format (although 3 missing at the moment),
+- weight at edge level, numeric
+- frenemy at edge level, numeric.
+---
+```{r plot-graph-from-edgelist, fig.height=5}
+plot(g_hitech_from_edgelist, 
+     edge.color = edge_colors,
+     edge.width = E(g_hitech_from_edgelist)$weight,
+     edge.curved = .5,
+     vertex.size = 5,
+     layout = l)
+```
+
+Note that we were able to register two edge attributes using the edgelist notation quite easily; and now using both in our visualization!
+---
+class: inverse, center, middle
+
+# 2- Vertex Attribute Data Structure
+
+---
+
+## Network Graphs and Data Structures (cont'd)
+
+
+If we are adding all three types of data, the R graph object will request:
+
+- Relational data and edge attributes as in one dataset (which I will shortly call as **"Relational data"**; but keep in mind that edge attributes go in this one as well)
+
+- Node attribute data in a separate dataset. (which I will shortly call as **"Vertex/node attribute data"**)
+
+---
+
+## Vertex Attribute data
+
+the vertex attribute data always comes in the edgelist format, and has to include the exact same labels used in the:
+
+- Relational data matrix notation row and column names, or
+
+- Relational data edgelist notation entries in the first two columns: "from" and "to" (the column names do not matter -- could be named as "ego" and "alter", and so forth. Mainly informative.)
+
+---
+## Vertex Attribute data (cont'd)
+
+Below is the vertex attributes Krackhardt's (1999) small hi-tech computer firm dataset: whether the employees (including managers) support unionization in the firm or not:
+
+```{r flo-graph-vattr} 
+df_vattr = fread( # read data as data.table
+  file.path(bucket, "data","Hi-tech_vertex_attributes.csv"))
+df_vattr
+```
+
+---
+Now, let's add our `df_vattr` data to the graph objects. First, using the matrix notation.
+
+Honestly, I couldn't find any straight-forward way of adding the attribute data directly to the graph usinfg the `graph_from_adjacency_matrix` notation. So this is what I will do:
+
+```{r create-graph-hitech-vattr}
+#g_hitech = graph_from_adjacency_matrix(M_sp)
+g_hitech = set_vertex_attr(g_hitech, "union_support", 
+                           value = df_vattr$union_support)
+g_hitech = set_vertex_attr(g_hitech, "union_support_text", 
+                           value = df_vattr$union_support_text)
+g_hitech
+```
+
+---
+Now using the edgelist notation:
+
+```{r flo-graph-from-edgelist-with-attr} 
+#g_hitech_from_edgelist = graph_from_data_frame(df_edgelist, directed = TRUE)
+g_hitech_from_edgelist_and_vattr = graph_from_data_frame(
+  df_edgelist, directed = TRUE, vertices = df_vattr)
+g_hitech_from_edgelist_and_vattr
+```
+
+We got our 3 vertices back!!!!!
+
+---
+
+class: inverse, center, middle
+
+# Data Structures for Affiliation Networks
+# a.k.a "two-mode" or "bipartite" networks
+
+---
+# Data Structures for Affiliation Networks
+
+So far, we worked with "one-mode" networks: all nodes were people, and they were connected to one another.
+
+But in some cases, we are interested in looking at connections between, for example, 
+
+- people and institutions (which NGOs are people affiliated with),
+- which countries are affiliated with what unions? (e.g., countries affiliated with EU, NATO, etc.)
+
+Which means we have more than one class of *entities*
+
+---
+
+# Matrix notation for Affiliation Networks
+
+Below is Joe Galaskiewicz's (1985) "CEOs and Clubs" dataset. This data gives the affiliation network of 26 CEO's and their spouses of major corporations and banks in the Minneapolis area to 15 clubs, corporate and cultural boards.
+
+```{r ceos-matrix}
+
+M_ceo = read.table(file.path(bucket, "data","galaskie_ceos_sociomatrix.txt"),
+                 header=TRUE,row.names=1)
+M_ceo
+```
+
+---
+# Matrix notation for Affiliation Networks
+
+---
+# Matrix notation for Affiliation Networks
+
+Note that the rownames and column names are different.
+
+This also means that our *incidence matrix* (not adjacency matrix!) is not necessarily square:
+
+(An incidence matrix shows the relationship between two classes of objects.)
+
+```{r ceos-matrix-dim}
+dim(M_ceo)
+```
+
+We have 26 CEOs affiliated with 16 social clubs.
+
+---
+# Graph from indicence matrix
+
+The logic is pretty much the same, but we will use a different function to register the affiliation matrix to the graph:
+
+```{r ceos-ccreat-graph-from-matrix}
+g_ceo = graph_from_incidence_matrix(M_ceo, directed = FALSE)
+g_ceo
+```
+
+Please note that affiliation networks are generally not directed -- if a person is affiliated to a club, the club has that person as a member, so the relationship is most frequently mutual.
+
+---
+# Graph from indicence matrix
+
+```{r ceos-ccreat-graph-from-matrix-2}
+g_ceo
+```
+
+Different from `graph_from_adjacency_matrix()` function, `graph_from_incidence_matrix()` automatically generates a vertex attribute called "type": in our example, this helps us distinguish CEOs from clubs.
+
+---
+```{r ceos-attr-graph-from-matrix-2}
+V(g_ceo)$type
+```
+---
+# Edgelist notation for Affiliation Networks
+
+---
+# Edgelist notation for Affiliation Networks
+
+We can also use edgelists for creating two-mode network graphs. But keep in mind that the `graph_from_data_frame()` function will not automatically detect the graph as two-mode network. Therefore you will need to make sure that your vertex attribute data has that information.
+
+*Note:* there is a separate package that is designed for two-mode networks called `tnet (https://toreopsahl.com/tnet/)`, but I believe this is beyond the scope of this tutorial, but feel free to check it out.
+
+
+---
+# Edgelist notation for Affiliation Networks
+
+```{r ceo-graph-from-edgelist-with-attr2} 
+df_ceo_edgelist = fread( # read data as data.table
+  file.path(bucket, "data","galaskie_ceos_edgelist.csv"))
+df_ceo_edgelist
+
+```
+
+---
+# Edgelist notation for Affiliation Networks
+
+```{r ceo-graph-from-edgelist-with-attr3} 
+df_ceo_vattr = fread( # read data as data.table
+  file.path(bucket, "data","galaskie_ceos_vertex_attributes.csv"))
+df_ceo_vattr
+```
+
+---
+# Edgelist notation for Affiliation Networks
+
+```{r ceo-graph-from-edgelist-with-attr} 
+g_ceo_from_edgelist = graph_from_data_frame(
+  df_ceo_edgelist, directed = FALSE, vertices = df_ceo_vattr)
+g_ceo_from_edgelist
+```
+
+---
+
+class: inverse, center, middle
+
+# One more thing
+#before we conclude...
+
+---
+
+class: inverse, center, middle
+
+# One-mode projections of 
+# affiliation networks
+
+---
+# One-mode projections of affiliation networks
+
+In some cases, we are not particularly interested in which CEOs go to which sociall clubs, but rather we want to know:
+
+- which CEOs attend the same clubs?
+
+or,
+
+- Which social clubs share CEO members?
+
+---
+# One-mode projections of affiliation networks (cont'd)
+
+This means, if we could find a way to convert the CEO-club connections to CEO-CEO connections or club-club connections, what would be more than enough. We would then use those "one-mode projection" adjacency matrices for our analyses.
+
+---
+
+# One-mode projections of affiliation networks (cont'd)
+
+In matrix notation, this can simply be achieved by *matrix multiplication*.
+
+CEO to CEO connections:
+
+```{r matrix-multipl}
+# multiply M_ceo with its transpose 
+# [26x15] %*% [15x26] --> [26,26] (CEO to CEO)
+M1_ceo = as.matrix(M_ceo) %*% t(as.matrix(M_ceo))
+M1_ceo
+```
+
+---
+# One-mode projections of affiliation networks (cont'd)
+
+Club to club connections:
+
+```{r matrix-multipl2}
+# multiply transpose of M_ceo with itself (M_ceo)
+# [15x26] %*% [26x15] --> [26,26] (CEO to CEO)
+M2_ceo = t(as.matrix(M_ceo)) %*% as.matrix(M_ceo)
+M2_ceo
+```
+
+---
+
+# One-mode projections of affiliation networks (cont'd)
+
+In edgelist notation, this can simply be achieved by *merging the dataset with itself*.
+
+CEO to CEO connections:
+
+```{r edgelist-merge}
+#from column is CEOs, to column is clubs 
+df_ceo_edgelist1 = merge(df_ceo_edgelist,df_ceo_edgelist, by= "to",
+                         allow.cartesian=TRUE)
+df_ceo_edgelist1 = df_ceo_edgelist1[, .(from.x,from.y)]
+df_ceo_edgelist1 = df_ceo_edgelist1[, .N, by = c("from.x", "from.y")]
+```
+
+---
+
+
+# One-mode projections of affiliation networks (cont'd)
+
+Club to club connections:
+
+```{r edgelist-merge2}
+#from column is CEOs, to column is clubs 
+df_ceo_edgelist1 = merge(df_ceo_edgelist,df_ceo_edgelist, by= "from",
+                         allow.cartesian=TRUE)
+df_ceo_edgelist1 = df_ceo_edgelist1[, .(to.x,to.y)]
+df_ceo_edgelist1 = df_ceo_edgelist1[, .N, by = c("to.x", "to.y")]
+```
+---
+
+class: inverse, center, middle
+
+# Thanks!
+
+
+

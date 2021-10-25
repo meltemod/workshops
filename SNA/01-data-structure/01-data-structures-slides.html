@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Social Network Analysis</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Meltem Odabaş" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Social Network Analysis
+## Session 01<br/>Data Structures
+### Meltem Odabaş
+### Pew Research Center
+### 2021-10-26 <br/>(updated: 2021-10-25)
+
+---
+
+
+background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
+
+
+
+
+class: inverse, center, middle
+
+# Why Social Network Analysis?
+
+---
+
+# Why Social Network Analysis?
+
+- Social relations and institutional connections shape our attitudes and behaviors
+
+---
+
+# Why Social Network Analysis?
+
+- Social relations and institutional connections shape our attitudes and behaviors
+
+- Allows researchers to do micro, meso and macro-level analyses:
+
+  + __*micro-level*__ e.g. individuals and their dyadic relationships
+  + __*meso-level*__ e.g. inter- and intra- organizational networks; social groups
+  + __*macro-level*__ e.g. large-scale and complex networks; community structures
+
+---
+
+class: inverse, center, middle
+
+# What types of information do social network graphs contain?
+
+---
+
+&lt;img src="01-data-structures-slides_files/figure-html/relational-1.png" style="display: block; margin: auto;" /&gt;
+
+Persons are represented in circle, referred to as "nodes" or "vertexes";
+
+Relations are represented with lines, referred to as "ties" or "edges".
+
+---
+
+&lt;img src="01-data-structures-slides_files/figure-html/relational-undirected-1.png" style="display: block; margin: auto;" /&gt;
+
+Relations can be **directed** (Mr. Collins is fond of Elizabeth may be, but she certainly not reciprocate the feeling!)
+---
+
+&lt;img src="01-data-structures-slides_files/figure-html/relational-undirected-weight-1.png" style="display: block; margin: auto;" /&gt;
+
+These "feelings" may be **strong**, or **weak**:
+
+*Edges can take ordinal attributes.*
+---
+
+
+&lt;img src="01-data-structures-slides_files/figure-html/relational-undirected-type-1.png" style="display: block; margin: auto;" /&gt;
+
+But does Lizzy love Mr. Darcy?!? 
+
+Not when Mr. Darcy thinks "she is tolerable"; but then for some reason turns full 180!
+
+*Edges can take cardinal attributes*: such as **love** vs. **hate**.
+
+---
+
+&lt;img src="01-data-structures-slides_files/figure-html/node-attribute-1.png" style="display: block; margin: auto;" /&gt;
+
+*Not only edges but nodes/vertexes can take both ordinal and cardinal attributes:*
+
+**Wealth** is ordinal and **Gender** (in Jane Austen's 1813 Western world!) is cardinal.
+
+(As you might know, Mr. Darcy earns 10,000 a year...)
+---
+
+class: inverse, center, middle
+
+# Network Graphs and Data Structures
+
+---
+
+## Network Graphs and Data Structures
+
+So far, we have seen three groups of datasets:
+
+- Relational data (represented in edges/ties drawn across nodes)
+
+- Attributes of the edges
+
+- Attributes of the vertices
+
+Graph objects in R will always request relational data; attribute data (either of edges or vertices) is rather optional. 
+
+
+---
+
+## Network Graphs and Data Structures (cont'd)
+
+
+If we are adding all three types of data, the R graph object will request:
+
+- Relational data and edge attributes as in one dataset (which I will shortly call as **"Relational data"**; but keep in mind that edge attributes go in this one as well)
+
+- Node attribute data in a separate dataset. (which I will shortly call as **"Vertex/node attribute data"**)
+
+---
+class: inverse, center, middle
+
+# 1- Relational Data Structure
+
+---
+
+## Relational Data structures
+
+There are two ways to represent relational data: 
+
+- **Matrix notation**, 
+
+- Edgelist Notation.
+
+---
+## Relational data in the form of Matrix notation
+
+Below is a Krackhardt's (1999) small hi-tech computer firm dataset. It looks at 36 employees and managers from the firm and their friendship ties.
+
+
+```r
+bucket = "/Users/meltemodabas/github/meltemod/workshops/SNA/01-data-structure"
+options(width = 60)
+M = read.table(file.path(bucket, "data","Hi-tech_sociomatrix.txt"),
+                 header=TRUE,row.names=1)
+M
+```
+
+```
+##        Abe Bob Carl Dale Ev Fred Gary Hal Ivo Jack Ken Len
+## Abe      0   0    0    0  0    1    0   0   0    0   0   0
+## Bob      0   0    0    1  0    0    0   0   0    1   0   0
+## Carl     0   0    0    0  0    1    0   1   0    0   0   1
+## Dale     0   1    0    0  0    0    0   0   0    0   0   0
+## Ev       0   0    0    0  0    0    0   0   0    0   0   0
+## Fred     0   0    0    0  0    0    0   0   0    0   0   0
+## Gary     0   0    0    1  0    0    0   0   0    0   0   0
+## Hal      0   0    1    0  0    1    0   0   0    0   0   0
+## Ivo      0   0    0    0  0    0    0   0   0    0   0   0
+## Jack     0   1    0    0  0    0    0   0   0    0   0   0
+## Ken      0   0    0    0  0    0    0   0   0    0   0   0
+## Len      0   0    1    0  0    0    0   0   0    0   0   0
+## Mel      0   1    0    1  0    0    0   0   0    0   0   0
+## Nan      0   1    0    0  0    0    1   0   1    0   1   0
+## Ovid     0   0    0    0  0    0    0   0   0    0   0   0
+## Pat      0   0    0    0  0    0    0   0   0    0   0   0
+## Quincy   0   0    0    0  0    0    0   0   0    0   0   0
+## Robin    0   0    0    0  0    0    0   0   0    0   1   0
+## Steve    0   0    0    0  1    0    0   0   0    0   0   0
+## Tom      0   0    0    1  0    0    0   0   0    0   1   0
+## Upton    0   0    0    0  0    1    0   0   1    0   0   0
+## Vic      0   0    0    0  0    0    0   0   0    0   1   0
+## Walt     0   0    0    0  0    0    0   0   0    0   0   0
+## Rick     0   0    0    1  1    0    1   0   0    0   1   0
+## York     0   0    0    0  0    0    0   0   0    0   0   0
+## Zoe      0   0    0    0  0    0    0   0   0    0   0   0
+## Alex     0   0    0    1  0    0    0   0   0    0   0   0
+## Ben      0   1    0    0  0    0    0   0   0    0   0   0
+## Chris    0   1    0    1  0    0    1   0   1    0   1   0
+## Dan      0   0    0    0  0    0    0   0   0    0   1   0
+## Earl     0   0    0    0  0    0    0   0   0    0   0   0
+## Fran     0   0    0    0  0    0    0   0   0    0   0   0
+## Gerry    0   0    0    0  0    0    0   0   0    0   1   0
+## Hugh     0   0    0    0  0    0    0   0   0    0   1   0
+## Irv      0   0    0    1  0    0    0   0   0    0   0   1
+## Jim      0   0    0    0  0    0    0   0   0    0   0   0
+##        Mel Nan Ovid Pat Quincy Robin Steve Tom Upton Vic
+## Abe      0   0    0   0      0     0     0   0     0   0
+## Bob      0   0    1   0      0     0     0   0     0   0
+## Carl     0   0    0   0      0     0     0   0     0   0
+## Dale     1   0    0   0      0     0     0   1     0   0
+## Ev       0   0    0   0      0     0     1   0     0   0
+## Fred     0   0    0   0      0     0     1   0     1   0
+## Gary     0   0    0   0      0     0     0   0     0   0
+## Hal      0   0    0   0      0     0     0   0     0   0
+## Ivo      0   0    0   0      0     0     0   1     0   0
+## Jack     0   0    0   0      0     0     0   0     0   0
+## Ken      0   1    0   0      0     1     0   1     0   0
+## Len      0   0    0   0      0     0     0   0     0   0
+## Mel      0   0    0   1      0     1     0   1     0   0
+## Nan      0   0    1   0      0     0     0   0     0   0
+## Ovid     0   1    0   0      0     0     0   0     0   0
+## Pat      1   0    0   0      0     0     1   0     0   0
+## Quincy   0   0    0   0      0     0     0   0     0   0
+## Robin    1   0    0   0      0     0     0   0     0   0
+## Steve    0   0    0   1      0     0     0   0     0   0
+## Tom      1   0    0   0      0     0     0   0     1   1
+## Upton    0   0    0   0      0     0     1   1     0   0
+## Vic      0   0    0   0      0     0     0   1     0   0
+## Walt     0   0    0   0      0     0     0   0     0   0
+## Rick     0   0    0   0      0     0     1   1     1   0
+## York     0   0    0   0      0     0     0   0     0   0
+## Zoe      0   0    0   0      0     0     0   0     1   0
+## Alex     0   0    0   0      0     1     0   0     0   0
+## Ben      0   0    0   0      0     0     0   0     0   0
+## Chris    1   1    1   0      0     1     0   1     1   0
+## Dan      1   0    0   0      0     0     1   0     0   0
+## Earl     0   0    0   1      0     0     1   0     0   0
+## Fran     0   0    0   0      0     0     0   0     0   0
+## Gerry    0   1    0   0      0     0     0   1     0   0
+## Hugh     0   1    1   0      0     0     0   1     0   0
+## Irv      0   0    0   1      0     0     1   0     0   0
+## Jim      0   0    0   1      0     0     0   0     0   0
+##        Walt Rick York Zoe Alex Ben Chris Dan Earl Fran
+## Abe       0    0    0   0    0   0     0   0    0    0
+## Bob       0    0    0   0    0   0     1   0    0    0
+## Carl      0    0    0   0    0   0     0   0    0    0
+## Dale      0    1    0   0    1   0     1   0    0    0
+## Ev        0    0    0   0    0   0     0   0    0    0
+## Fred      0    0    0   0    0   0     0   0    0    0
+## Gary      0    1    0   0    0   0     0   0    0    0
+## Hal       0    0    0   0    0   0     0   0    0    0
+## Ivo       0    0    0   0    0   0     1   0    0    0
+## Jack      0    0    0   0    0   0     0   0    0    0
+## Ken       0    1    0   0    0   0     0   1    0    0
+## Len       0    0    0   1    0   0     0   0    0    0
+## Mel       0    0    0   0    0   0     1   1    0    0
+## Nan       0    0    0   0    0   0     1   0    0    0
+## Ovid      0    0    0   0    0   0     1   0    0    0
+## Pat       0    0    0   0    0   0     0   0    0    0
+## Quincy    0    0    0   0    0   0     0   0    0    0
+## Robin     0    0    0   0    1   0     1   0    0    0
+## Steve     0    1    0   0    0   0     0   1    0    0
+## Tom       0    1    0   1    0   0     1   0    0    0
+## Upton     0    0    0   0    0   0     0   0    0    0
+## Vic       0    0    0   0    0   0     0   0    0    0
+## Walt      0    1    0   0    0   0     1   0    0    0
+## Rick      0    0    0   0    0   0     1   1    0    0
+## York      0    0    0   0    0   0     0   0    0    0
+## Zoe       0    0    0   0    0   0     0   0    0    0
+## Alex      0    1    0   0    0   0     0   0    0    0
+## Ben       0    0    0   0    0   0     0   0    0    0
+## Chris     1    1    0   0    1   0     0   0    0    0
+## Dan       0    1    0   0    0   0     0   0    0    0
+## Earl      0    0    0   0    0   0     0   0    0    0
+## Fran      0    0    0   0    0   0     0   0    0    0
+## Gerry     0    1    0   0    0   0     1   0    0    0
+## Hugh      0    1    0   0    0   0     1   0    0    0
+## Irv       0    0    0   1    0   0     0   1    0    0
+## Jim       0    0    0   0    0   0     0   0    0    0
+##        Gerry Hugh Irv Jim
+## Abe        0    0   0   0
+## Bob        0    0   0   0
+## Carl       0    0   1   0
+## Dale       0    0   1   0
+## Ev         0    0   0   0
+## Fred       0    0   0   0
+## Gary       0    0   0   0
+## Hal        0    0   0   0
+## Ivo        0    0   0   0
+## Jack       0    0   0   0
+## Ken        1    1   0   0
+## Len        1    0   1   0
+## Mel        0    0   0   0
+## Nan        1    0   0   0
+## Ovid       0    1   0   0
+## Pat        0    0   1   1
+## Quincy     0    0   0   0
+## Robin      0    0   0   0
+## Steve      1    0   1   0
+## Tom        1    1   0   0
+## Upton      0    0   0   0
+## Vic        0    1   0   0
+## Walt       0    0   0   0
+## Rick       0    0   0   0
+## York       0    0   0   0
+## Zoe        0    0   1   0
+## Alex       0    0   0   0
+## Ben        0    0   0   0
+## Chris      1    1   0   0
+## Dan        0    0   1   0
+## Earl       0    0   0   0
+## Fran       0    0   0   0
+## Gerry      0    1   1   0
+## Hugh       1    0   0   0
+## Irv        1    0   0   0
+## Jim        0    0   0   0
+```
+
+---
+
+
+You can also work with sparse matrices:
+
+
+```r
+tmp = as.data.table(M)
+M_sp = sparsify(tmp)
+M_sp
+```
+
+```
+## 36 x 36 sparse Matrix of class "dgCMatrix"
+```
+
+```
+##    [[ suppressing 36 column names 'Abe', 'Bob', 'Carl' ... ]]
+```
+
+```
+##                                                            
+##  [1,] . . . . . 1 . . . . . . . . . . . . . . . . . . . . .
+##  [2,] . . . 1 . . . . . 1 . . . . 1 . . . . . . . . . . . .
+##  [3,] . . . . . 1 . 1 . . . 1 . . . . . . . . . . . . . . .
+##  [4,] . 1 . . . . . . . . . . 1 . . . . . . 1 . . . 1 . . 1
+##  [5,] . . . . . . . . . . . . . . . . . . 1 . . . . . . . .
+##  [6,] . . . . . . . . . . . . . . . . . . 1 . 1 . . . . . .
+##  [7,] . . . 1 . . . . . . . . . . . . . . . . . . . 1 . . .
+##  [8,] . . 1 . . 1 . . . . . . . . . . . . . . . . . . . . .
+##  [9,] . . . . . . . . . . . . . . . . . . . 1 . . . . . . .
+## [10,] . 1 . . . . . . . . . . . . . . . . . . . . . . . . .
+## [11,] . . . . . . . . . . . . . 1 . . . 1 . 1 . . . 1 . . .
+## [12,] . . 1 . . . . . . . . . . . . . . . . . . . . . . 1 .
+## [13,] . 1 . 1 . . . . . . . . . . . 1 . 1 . 1 . . . . . . .
+## [14,] . 1 . . . . 1 . 1 . 1 . . . 1 . . . . . . . . . . . .
+## [15,] . . . . . . . . . . . . . 1 . . . . . . . . . . . . .
+## [16,] . . . . . . . . . . . . 1 . . . . . 1 . . . . . . . .
+## [17,] . . . . . . . . . . . . . . . . . . . . . . . . . . .
+## [18,] . . . . . . . . . . 1 . 1 . . . . . . . . . . . . . 1
+## [19,] . . . . 1 . . . . . . . . . . 1 . . . . . . . 1 . . .
+## [20,] . . . 1 . . . . . . 1 . 1 . . . . . . . 1 1 . 1 . 1 .
+## [21,] . . . . . 1 . . 1 . . . . . . . . . 1 1 . . . . . . .
+## [22,] . . . . . . . . . . 1 . . . . . . . . 1 . . . . . . .
+## [23,] . . . . . . . . . . . . . . . . . . . . . . . 1 . . .
+## [24,] . . . 1 1 . 1 . . . 1 . . . . . . . 1 1 1 . . . . . .
+## [25,] . . . . . . . . . . . . . . . . . . . . . . . . . . .
+## [26,] . . . . . . . . . . . . . . . . . . . . 1 . . . . . .
+## [27,] . . . 1 . . . . . . . . . . . . . 1 . . . . . 1 . . .
+## [28,] . 1 . . . . . . . . . . . . . . . . . . . . . . . . .
+## [29,] . 1 . 1 . . 1 . 1 . 1 . 1 1 1 . . 1 . 1 1 . 1 1 . . 1
+## [30,] . . . . . . . . . . 1 . 1 . . . . . 1 . . . . 1 . . .
+## [31,] . . . . . . . . . . . . . . . 1 . . 1 . . . . . . . .
+## [32,] . . . . . . . . . . . . . . . . . . . . . . . . . . .
+## [33,] . . . . . . . . . . 1 . . 1 . . . . . 1 . . . 1 . . .
+## [34,] . . . . . . . . . . 1 . . 1 1 . . . . 1 . . . 1 . . .
+## [35,] . . . 1 . . . . . . . 1 . . . 1 . . 1 . . . . . . 1 .
+## [36,] . . . . . . . . . . . . . . . 1 . . . . . . . . . . .
+##                        
+##  [1,] . . . . . . . . .
+##  [2,] . 1 . . . . . . .
+##  [3,] . . . . . . . 1 .
+##  [4,] . 1 . . . . . 1 .
+##  [5,] . . . . . . . . .
+##  [6,] . . . . . . . . .
+##  [7,] . . . . . . . . .
+##  [8,] . . . . . . . . .
+##  [9,] . 1 . . . . . . .
+## [10,] . . . . . . . . .
+## [11,] . . 1 . . 1 1 . .
+## [12,] . . . . . 1 . 1 .
+## [13,] . 1 1 . . . . . .
+## [14,] . 1 . . . 1 . . .
+## [15,] . 1 . . . . 1 . .
+## [16,] . . . . . . . 1 1
+## [17,] . . . . . . . . .
+## [18,] . 1 . . . . . . .
+## [19,] . . 1 . . 1 . 1 .
+## [20,] . 1 . . . 1 1 . .
+## [21,] . . . . . . . . .
+## [22,] . . . . . . 1 . .
+## [23,] . 1 . . . . . . .
+## [24,] . 1 1 . . . . . .
+## [25,] . . . . . . . . .
+## [26,] . . . . . . . 1 .
+## [27,] . . . . . . . . .
+## [28,] . . . . . . . . .
+## [29,] . . . . . 1 1 . .
+## [30,] . . . . . . . 1 .
+## [31,] . . . . . . . . .
+## [32,] . . . . . . . . .
+## [33,] . 1 . . . . 1 1 .
+## [34,] . 1 . . . 1 . . .
+## [35,] . . 1 . . 1 . . .
+## [36,] . . . . . . . . .
+```
+
+
+---
+
+
+```r
+dim(M) #36x36 matrix
+```
+
+```
+## [1] 36 36
+```
+
+```r
+all.equal(rownames(M),colnames(M)) #rownames and colnames are equal
+```
+
+```
+## [1] TRUE
+```
+
+```r
+isSymmetric(as.matrix(M)) #not symmetric; not all ties are reciprocated.
+```
+
+```
+## [1] FALSE
+```
+What we have is called an **adjacency matrix**: a square matrix that represents a finite graph. 
+
+The employee names are the "nodes," and friendships are defined as connections from one employee to another. 
+---
+
+
+## Using adjacency matrix to create a graph object
+
+There are various packages to work with network graphs, such as: 
+
+- `igraph`
+- `sna`
+- `network`
+
+I am more familiar with igraph, so this is what I will use for this tutorial. Needless to say, feel free to explore other packages on your spare time.
+
+
+
+---
+
+## Using adjacency matrix to create a graph object
+
+Ok, once we have our matrix (or sparse matrix!) ready, we can simply create a graph object (or, "igraph object"!) using igraph package. 
+
+
+```r
+g_hitech = graph_from_adjacency_matrix(M_sp)
+g_hitech
+```
+
+```
+## IGRAPH 88e2b36 DN-- 36 147 -- 
+## + attr: name (v/c)
+## + edges from 88e2b36 (vertex names):
+##  [1] Dale -&gt;Bob  Jack -&gt;Bob  Mel  -&gt;Bob  Nan  -&gt;Bob 
+##  [5] Ben  -&gt;Bob  Chris-&gt;Bob  Hal  -&gt;Carl Len  -&gt;Carl
+##  [9] Bob  -&gt;Dale Gary -&gt;Dale Mel  -&gt;Dale Tom  -&gt;Dale
+## [13] Rick -&gt;Dale Alex -&gt;Dale Chris-&gt;Dale Irv  -&gt;Dale
+## [17] Steve-&gt;Ev   Rick -&gt;Ev   Abe  -&gt;Fred Carl -&gt;Fred
+## [21] Hal  -&gt;Fred Upton-&gt;Fred Nan  -&gt;Gary Rick -&gt;Gary
+## [25] Chris-&gt;Gary Carl -&gt;Hal  Nan  -&gt;Ivo  Upton-&gt;Ivo 
+## [29] Chris-&gt;Ivo  Bob  -&gt;Jack Nan  -&gt;Ken  Robin-&gt;Ken 
+## + ... omitted several edges
+```
+This is a **directed network** (`DN`) of 36 vertices and 147 edges. There is one vertex attribute in this graph called **name** (`attr: name(v/c)`) in character format. This attribute comes from the row and column names assigned.
+---
+
+In each igraph object, you can see the list of edges by using **`E(graph)`** function, and list of vertices by typing `V(graph)` function:
+
+
+```r
+E(g_hitech)
+```
+
+```
+## + 147/147 edges from 88e2b36 (vertex names):
+##  [1] Dale -&gt;Bob  Jack -&gt;Bob  Mel  -&gt;Bob  Nan  -&gt;Bob 
+##  [5] Ben  -&gt;Bob  Chris-&gt;Bob  Hal  -&gt;Carl Len  -&gt;Carl
+##  [9] Bob  -&gt;Dale Gary -&gt;Dale Mel  -&gt;Dale Tom  -&gt;Dale
+## [13] Rick -&gt;Dale Alex -&gt;Dale Chris-&gt;Dale Irv  -&gt;Dale
+## [17] Steve-&gt;Ev   Rick -&gt;Ev   Abe  -&gt;Fred Carl -&gt;Fred
+## [21] Hal  -&gt;Fred Upton-&gt;Fred Nan  -&gt;Gary Rick -&gt;Gary
+## [25] Chris-&gt;Gary Carl -&gt;Hal  Nan  -&gt;Ivo  Upton-&gt;Ivo 
+## [29] Chris-&gt;Ivo  Bob  -&gt;Jack Nan  -&gt;Ken  Robin-&gt;Ken 
+## [33] Tom  -&gt;Ken  Vic  -&gt;Ken  Rick -&gt;Ken  Chris-&gt;Ken 
+## [37] Dan  -&gt;Ken  Gerry-&gt;Ken  Hugh -&gt;Ken  Carl -&gt;Len 
+## + ... omitted several edges
+```
+
+---
+
+
+In each igraph object, you can see the list of edges by using `E(graph)` function, and list of vertices by typing **`V(graph)`** function:
+
+
+```r
+V(g_hitech)
+```
+
+```
+## + 36/36 vertices, named, from 88e2b36:
+##  [1] Abe    Bob    Carl   Dale   Ev     Fred   Gary   Hal   
+##  [9] Ivo    Jack   Ken    Len    Mel    Nan    Ovid   Pat   
+## [17] Quincy Robin  Steve  Tom    Upton  Vic    Walt   Rick  
+## [25] York   Zoe    Alex   Ben    Chris  Dan    Earl   Fran  
+## [33] Gerry  Hugh   Irv    Jim
+```
+
+To list an attribute by itself, such as the vertex attribute `name(v/c)`, use the dollar sign (in base R):
+
+
+```r
+V(g_hitech)$name
+```
+
+```
+##  [1] "Abe"    "Bob"    "Carl"   "Dale"   "Ev"     "Fred"  
+##  [7] "Gary"   "Hal"    "Ivo"    "Jack"   "Ken"    "Len"   
+## [13] "Mel"    "Nan"    "Ovid"   "Pat"    "Quincy" "Robin" 
+## [19] "Steve"  "Tom"    "Upton"  "Vic"    "Walt"   "Rick"  
+## [25] "York"   "Zoe"    "Alex"   "Ben"    "Chris"  "Dan"   
+## [31] "Earl"   "Fran"   "Gerry"  "Hugh"   "Irv"    "Jim"
+```
+---
+Let's plot the network graph:
+
+
+```r
+l = layout.fruchterman.reingold(g_hitech)
+plot(g_hitech, vertex.size = 10, layout = l)
+```
+
+![](01-data-structures-slides_files/figure-html/plot-graph-medici, -1.png)&lt;!-- --&gt;
+---
+
+Although not all ties are reciprocated in this graph,, we can rather set the igraph as "undirected"
+
+
+```r
+g_hitech_und = graph_from_adjacency_matrix(M_sp, mode = "undirected")
+g_hitech_und
+```
+
+```
+## IGRAPH 6ea0ad2 UN-- 36 91 -- 
+## + attr: name (v/c)
+## + edges from 6ea0ad2 (vertex names):
+##  [1] Abe --Fred  Bob --Dale  Bob --Jack  Bob --Mel  
+##  [5] Bob --Nan   Bob --Ovid  Bob --Ben   Bob --Chris
+##  [9] Carl--Fred  Carl--Hal   Carl--Len   Carl--Irv  
+## [13] Dale--Gary  Dale--Mel   Dale--Tom   Dale--Rick 
+## [17] Dale--Alex  Dale--Chris Dale--Irv   Ev  --Steve
+## [21] Ev  --Rick  Fred--Hal   Fred--Steve Fred--Upton
+## [25] Gary--Nan   Gary--Rick  Gary--Chris Ivo --Nan  
+## [29] Ivo --Tom   Ivo --Upton Ivo --Chris Ken --Nan  
+## + ... omitted several edges
+```
+
+Let's read the information: `g_medici_und` is an **undirected network** (`UN`) of 36 vertices and **91** edges (not 147!).
+
+---
+
+Plotting the graph, we see:
+
+
+```r
+plot(g_hitech_und, vertex.size = 10, layout = l)
+```
+
+![](01-data-structures-slides_files/figure-html/plot-undirected-graph-medici-1.png)&lt;!-- --&gt;
+---
+
+It is possible to assign tie weights to matrices: rather than using 0-1 dichotomy, you may assign values between [0-Z], where Z is a reel number.
+
+Although the original dataset does not have weights for friendships, we can make up our own values (just for the sake of practicing!) I will replace the cells that are equal to 1 to a randomly selected list of values ranging across 1 and 5
+
+
+```r
+M_sp[M_sp == 1] #prints all the values in flo_sp that equal to 1
+```
+
+```
+## &lt;sparse&gt;[ &lt;logic&gt; ] : .M.sub.i.logical() maybe inefficient
+```
+
+```
+##   [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+##  [28] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+##  [55] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+##  [82] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+## [109] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
+## [136] 1 1 1 1 1 1 1 1 1 1 1 1
+```
+
+```r
+length(M_sp[M_sp == 1]) #147 ties
+```
+
+```
+## &lt;sparse&gt;[ &lt;logic&gt; ] : .M.sub.i.logical() maybe inefficient
+```
+
+```
+## [1] 147
+```
+---
+
+```r
+random_values = sample(c(1:5), length(M_sp[M_sp == 1]), replace = T) #get 147 randomly seleccted constant numbers ranging from 1 to 5
+```
+
+```
+## &lt;sparse&gt;[ &lt;logic&gt; ] : .M.sub.i.logical() maybe inefficient
+```
+
+```r
+random_values
+```
+
+```
+##   [1] 4 5 4 3 1 4 5 4 1 5 3 5 2 1 3 1 2 4 3 1 3 2 2 4 4 5 5
+##  [28] 4 5 4 3 3 2 4 2 2 4 1 1 2 4 1 3 2 2 3 1 3 3 3 4 1 1 5
+##  [55] 1 4 3 2 2 4 3 5 4 4 5 2 4 3 5 3 3 1 3 1 1 4 2 1 5 3 4
+##  [82] 4 2 5 1 1 3 3 4 1 3 2 3 1 2 3 3 3 1 3 2 2 2 3 5 4 2 2
+## [109] 2 3 3 3 4 1 2 5 5 5 1 3 2 1 3 2 4 1 2 5 1 2 3 4 4 3 1
+## [136] 1 5 5 4 1 5 3 4 4 5 5 2
+```
+
+```r
+M_sp_weighted = M_sp #create a new sparse matrix
+M_sp_weighted[M_sp_weighted == 1] &lt;- random_values 
+#assign these random values to existing ties
+```
+---
+
+```r
+M_sp_weighted
+```
+
+```
+## 36 x 36 sparse Matrix of class "dgCMatrix"
+```
+
+```
+##    [[ suppressing 36 column names 'Abe', 'Bob', 'Carl' ... ]]
+```
+
+```
+##                                                            
+##  [1,] . . . . . 3 . . . . . . . . . . . . . . . . . . . . .
+##  [2,] . . . 1 . . . . . 4 . . . . 1 . . . . . . . . . . . .
+##  [3,] . . . . . 1 . 5 . . . 2 . . . . . . . . . . . . . . .
+##  [4,] . 4 . . . . . . . . . . 1 . . . . . . 1 . . . 3 . . 5
+##  [5,] . . . . . . . . . . . . . . . . . . 2 . . . . . . . .
+##  [6,] . . . . . . . . . . . . . . . . . . 4 . 5 . . . . . .
+##  [7,] . . . 5 . . . . . . . . . . . . . . . . . . . 2 . . .
+##  [8,] . . 5 . . 3 . . . . . . . . . . . . . . . . . . . . .
+##  [9,] . . . . . . . . . . . . . . . . . . . 1 . . . . . . .
+## [10,] . 5 . . . . . . . . . . . . . . . . . . . . . . . . .
+## [11,] . . . . . . . . . . . . . 3 . . . 5 . 4 . . . 3 . . .
+## [12,] . . 4 . . . . . . . . . . . . . . . . . . . . . . 2 .
+## [13,] . 4 . 3 . . . . . . . . . . . 3 . 4 . 2 . . . . . . .
+## [14,] . 3 . . . . 2 . 5 . 3 . . . 5 . . . . . . . . . . . .
+## [15,] . . . . . . . . . . . . . 3 . . . . . . . . . . . . .
+## [16,] . . . . . . . . . . . . 3 . . . . . 3 . . . . . . . .
+## [17,] . . . . . . . . . . . . . . . . . . . . . . . . . . .
+## [18,] . . . . . . . . . . 3 . 2 . . . . . . . . . . . . . 4
+## [19,] . . . . 2 . . . . . . . . . . 2 . . . . . . . 1 . . .
+## [20,] . . . 5 . . . . . . 2 . 2 . . . . . . . 1 4 . 2 . 2 .
+## [21,] . . . . . 2 . . 4 . . . . . . . . . 5 1 . . . . . . .
+## [22,] . . . . . . . . . . 4 . . . . . . . . 5 . . . . . . .
+## [23,] . . . . . . . . . . . . . . . . . . . . . . . 3 . . .
+## [24,] . . . 2 4 . 4 . . . 2 . . . . . . . 3 3 1 . . . . . .
+## [25,] . . . . . . . . . . . . . . . . . . . . . . . . . . .
+## [26,] . . . . . . . . . . . . . . . . . . . . 3 . . . . . .
+## [27,] . . . 1 . . . . . . . . . . . . . 4 . . . . . 3 . . .
+## [28,] . 1 . . . . . . . . . . . . . . . . . . . . . . . . .
+## [29,] . 4 . 3 . . 4 . 5 . 2 . 3 3 1 . . 5 . 4 3 . 1 3 . . 2
+## [30,] . . . . . . . . . . 4 . 1 . . . . . 3 . . . . 1 . . .
+## [31,] . . . . . . . . . . . . . . . 2 . . 1 . . . . . . . .
+## [32,] . . . . . . . . . . . . . . . . . . . . . . . . . . .
+## [33,] . . . . . . . . . . 1 . . 4 . . . . . 4 . . . 3 . . .
+## [34,] . . . . . . . . . . 1 . . 1 4 . . . . 2 . . . 2 . . .
+## [35,] . . . 1 . . . . . . . 4 . . . 4 . . 3 . . . . . . 3 .
+## [36,] . . . . . . . . . . . . . . . 3 . . . . . . . . . . .
+##                        
+##  [1,] . . . . . . . . .
+##  [2,] . 2 . . . . . . .
+##  [3,] . . . . . . . 4 .
+##  [4,] . 2 . . . . . 1 .
+##  [5,] . . . . . . . . .
+##  [6,] . . . . . . . . .
+##  [7,] . . . . . . . . .
+##  [8,] . . . . . . . . .
+##  [9,] . 3 . . . . . . .
+## [10,] . . . . . . . . .
+## [11,] . . 3 . . 4 4 . .
+## [12,] . . . . . 1 . 5 .
+## [13,] . 3 2 . . . . . .
+## [14,] . 3 . . . 2 . . .
+## [15,] . 4 . . . . 3 . .
+## [16,] . . . . . . . 3 2
+## [17,] . . . . . . . . .
+## [18,] . 1 . . . . . . .
+## [19,] . . 1 . . 5 . 4 .
+## [20,] . 2 . . . 1 1 . .
+## [21,] . . . . . . . . .
+## [22,] . . . . . . 1 . .
+## [23,] . 5 . . . . . . .
+## [24,] . 5 3 . . . . . .
+## [25,] . . . . . . . . .
+## [26,] . . . . . . . 4 .
+## [27,] . . . . . . . . .
+## [28,] . . . . . . . . .
+## [29,] . . . . . 2 5 . .
+## [30,] . . . . . . . 5 .
+## [31,] . . . . . . . . .
+## [32,] . . . . . . . . .
+## [33,] . 5 . . . . 5 5 .
+## [34,] . 1 . . . 3 . . .
+## [35,] . . 2 . . 4 . . .
+## [36,] . . . . . . . . .
+```
+
+---
+Let's create a new graph with this weighted matrix:
+
+
+```r
+g_hitech_weighted = graph_from_adjacency_matrix(M_sp_weighted, 
+                                                mode = "directed", weighted = TRUE)
+g_hitech_weighted
+```
+
+```
+## IGRAPH b1c6f88 DNW- 36 147 -- 
+## + attr: name (v/c), weight (e/n)
+## + edges from b1c6f88 (vertex names):
+##  [1] Dale -&gt;Bob  Jack -&gt;Bob  Mel  -&gt;Bob  Nan  -&gt;Bob 
+##  [5] Ben  -&gt;Bob  Chris-&gt;Bob  Hal  -&gt;Carl Len  -&gt;Carl
+##  [9] Bob  -&gt;Dale Gary -&gt;Dale Mel  -&gt;Dale Tom  -&gt;Dale
+## [13] Rick -&gt;Dale Alex -&gt;Dale Chris-&gt;Dale Irv  -&gt;Dale
+## [17] Steve-&gt;Ev   Rick -&gt;Ev   Abe  -&gt;Fred Carl -&gt;Fred
+## [21] Hal  -&gt;Fred Upton-&gt;Fred Nan  -&gt;Gary Rick -&gt;Gary
+## [25] Chris-&gt;Gary Carl -&gt;Hal  Nan  -&gt;Ivo  Upton-&gt;Ivo 
+## [29] Chris-&gt;Ivo  Bob  -&gt;Jack Nan  -&gt;Ken  Robin-&gt;Ken 
+## + ... omitted several edges
+```
+
+`g_hitech_weighted` is a **directed and weighted graph** with 36 vertices and 147 ties.
+
+The graph has now two attributes: An edge attribute called **weight** (`weight (e/n)`) in numeric format and a vertex attribute called *name*(`name (v/c)`) in character format.
+
+
+---
+
+Let's plot this new graph:
+
+
+```r
+plot(g_hitech_weighted,      
+     edge.width = E(g_hitech_weighted)$weight, #use edge weight attr to edge width
+     edge.curved = .5, #curve the edges 
+     vertex.size = 5, 
+     layout = l)
+```
+
+![](01-data-structures-slides_files/figure-html/plot-weighted-medici-graph-1.png)&lt;!-- --&gt;
+
+---
+Ok, this got a bit cluttered. 
+
+---
+We could instead make up "friend" vs. "enemy" ties; assigning 1 foor friend and -1 for enemy:
+
+We could also create a love-hate matrix: by only using values of +1 or -1 for existing ties.
+
+
+```r
+random_values_v2 = sample(c(1,-1), length(M_sp[M_sp == 1]), replace = T) #randomly select -1 or 1
+```
+
+```
+## &lt;sparse&gt;[ &lt;logic&gt; ] : .M.sub.i.logical() maybe inefficient
+```
+
+```r
+random_values_v2
+```
+
+```
+##   [1]  1  1 -1 -1  1 -1  1  1  1  1  1 -1 -1  1 -1 -1  1 -1
+##  [19] -1 -1 -1 -1  1 -1  1  1 -1 -1 -1 -1 -1  1 -1  1 -1  1
+##  [37] -1 -1  1 -1  1 -1 -1 -1 -1  1 -1  1  1  1 -1 -1 -1 -1
+##  [55]  1 -1  1 -1 -1  1 -1  1  1  1  1 -1  1  1 -1 -1  1 -1
+##  [73] -1 -1  1 -1 -1 -1  1 -1  1  1 -1 -1 -1 -1  1  1  1  1
+##  [91]  1  1  1  1  1  1 -1  1  1  1 -1 -1 -1  1  1 -1 -1  1
+## [109] -1 -1  1 -1 -1 -1  1  1  1  1  1  1  1  1  1 -1 -1 -1
+## [127] -1 -1 -1  1 -1  1  1  1 -1  1  1  1 -1  1 -1 -1 -1  1
+## [145]  1  1  1
+```
+
+```r
+M_sp_hatred = M_sp #create a new sparse matrix
+M_sp_hatred[M_sp_hatred == 1] &lt;- random_values_v2 
+#assign these random values to existing ties in flo_sp
+```
+---
+
+```r
+M_sp_hatred
+```
+
+```
+## 36 x 36 sparse Matrix of class "dgCMatrix"
+```
+
+```
+##    [[ suppressing 36 column names 'Abe', 'Bob', 'Carl' ... ]]
+```
+
+```
+##                                                          
+##  [1,] .  . .  .  . -1  . .  .  .  .  .  .  .  .  . . .  .
+##  [2,] .  . .  1  .  .  . .  . -1  .  .  .  . -1  . . .  .
+##  [3,] .  . .  .  . -1  . 1  .  .  . -1  .  .  .  . . .  .
+##  [4,] .  1 .  .  .  .  . .  .  .  .  . -1  .  .  . . .  .
+##  [5,] .  . .  .  .  .  . .  .  .  .  .  .  .  .  . . . -1
+##  [6,] .  . .  .  .  .  . .  .  .  .  .  .  .  .  . . .  1
+##  [7,] .  . .  1  .  .  . .  .  .  .  .  .  .  .  . . .  .
+##  [8,] .  . 1  .  . -1  . .  .  .  .  .  .  .  .  . . .  .
+##  [9,] .  . .  .  .  .  . .  .  .  .  .  .  .  .  . . .  .
+## [10,] .  1 .  .  .  .  . .  .  .  .  .  .  .  .  . . .  .
+## [11,] .  . .  .  .  .  . .  .  .  .  .  .  1  .  . . 1  .
+## [12,] .  . 1  .  .  .  . .  .  .  .  .  .  .  .  . . .  .
+## [13,] . -1 .  1  .  .  . .  .  .  .  .  .  .  .  1 . 1  .
+## [14,] . -1 .  .  .  .  1 . -1  . -1  .  .  . -1  . . .  .
+## [15,] .  . .  .  .  .  . .  .  .  .  .  .  1  .  . . .  .
+## [16,] .  . .  .  .  .  . .  .  .  .  . -1  .  .  . . .  1
+## [17,] .  . .  .  .  .  . .  .  .  .  .  .  .  .  . . .  .
+## [18,] .  . .  .  .  .  . .  .  .  1  . -1  .  .  . . .  .
+## [19,] .  . .  .  1  .  . .  .  .  .  .  .  .  . -1 . .  .
+## [20,] .  . . -1  .  .  . .  .  . -1  . -1  .  .  . . .  .
+## [21,] .  . .  .  . -1  . . -1  .  .  .  .  .  .  . . . -1
+## [22,] .  . .  .  .  .  . .  .  .  1  .  .  .  .  . . .  .
+## [23,] .  . .  .  .  .  . .  .  .  .  .  .  .  .  . . .  .
+## [24,] .  . . -1 -1  . -1 .  .  . -1  .  .  .  .  . . . -1
+## [25,] .  . .  .  .  .  . .  .  .  .  .  .  .  .  . . .  .
+## [26,] .  . .  .  .  .  . .  .  .  .  .  .  .  .  . . .  .
+## [27,] .  . .  1  .  .  . .  .  .  .  .  .  .  .  . . 1  .
+## [28,] .  1 .  .  .  .  . .  .  .  .  .  .  .  .  . . .  .
+## [29,] . -1 . -1  .  .  1 . -1  .  1  .  1  1  1  . . 1  .
+## [30,] .  . .  .  .  .  . .  .  . -1  . -1  .  .  . . .  1
+## [31,] .  . .  .  .  .  . .  .  .  .  .  .  .  . -1 . . -1
+## [32,] .  . .  .  .  .  . .  .  .  .  .  .  .  .  . . .  .
+## [33,] .  . .  .  .  .  . .  .  . -1  .  . -1  .  . . .  .
+## [34,] .  . .  .  .  .  . .  .  .  1  .  . -1 -1  . . .  .
+## [35,] .  . . -1  .  .  . .  .  .  .  1  .  .  .  1 . . -1
+## [36,] .  . .  .  .  .  . .  .  .  .  .  .  .  . -1 . .  .
+##                                                  
+##  [1,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+##  [2,]  .  . . .  . .  .  . .  1  . . .  .  .  . .
+##  [3,]  .  . . .  . .  .  . .  .  . . .  .  . -1 .
+##  [4,] -1  . . .  1 .  .  1 . -1  . . .  .  .  1 .
+##  [5,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+##  [6,]  . -1 . .  . .  .  . .  .  . . .  .  .  . .
+##  [7,]  .  . . .  1 .  .  . .  .  . . .  .  .  . .
+##  [8,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+##  [9,]  1  . . .  . .  .  . . -1  . . .  .  .  . .
+## [10,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+## [11,] -1  . . .  1 .  .  . .  .  1 . . -1  1  . .
+## [12,]  .  . . .  . . -1  . .  .  . . . -1  . -1 .
+## [13,] -1  . . .  . .  .  . .  1  1 . .  .  .  . .
+## [14,]  .  . . .  . .  .  . . -1  . . . -1  .  . .
+## [15,]  .  . . .  . .  .  . . -1  . . .  .  1  . .
+## [16,]  .  . . .  . .  .  . .  .  . . .  .  . -1 1
+## [17,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+## [18,]  .  . . .  . .  . -1 . -1  . . .  .  .  . .
+## [19,]  .  . . .  1 .  .  . .  .  1 . . -1  . -1 .
+## [20,]  . -1 1 .  1 . -1  . .  1  . . . -1 -1  . .
+## [21,] -1  . . .  . .  .  . .  .  . . .  .  .  . .
+## [22,]  1  . . .  . .  .  . .  .  . . .  .  1  . .
+## [23,]  .  . . .  1 .  .  . .  1  . . .  .  .  . .
+## [24,] -1 -1 . .  . .  .  . .  1  1 . .  .  .  . .
+## [25,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+## [26,]  .  1 . .  . .  .  . .  .  . . .  .  .  1 .
+## [27,]  .  . . . -1 .  .  . .  .  . . .  .  .  . .
+## [28,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+## [29,]  1  1 . 1  1 .  . -1 .  .  . . .  1  1  . .
+## [30,]  .  . . .  1 .  .  . .  .  . . .  .  .  1 .
+## [31,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+## [32,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+## [33,]  1  . . .  1 .  .  . .  1  . . .  .  1  1 .
+## [34,] -1  . . . -1 .  .  . .  1  . . . -1  .  . .
+## [35,]  .  . . .  . .  1  . .  . -1 . .  1  .  . .
+## [36,]  .  . . .  . .  .  . .  .  . . .  .  .  . .
+```
+---
+rather than using the edge weights, let's use colors to define "love" and "hate" this time:
+
+
+```r
+#for all ties, first assign the color red, which is for hate.
+edge_colors = rep("red", length(M_sp[M_sp == 1]))
+```
+
+```
+## &lt;sparse&gt;[ &lt;logic&gt; ] : .M.sub.i.logical() maybe inefficient
+```
+
+```r
+edge_colors
+```
+
+```
+##   [1] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [10] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [19] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [28] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [37] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [46] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [55] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [64] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [73] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [82] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+##  [91] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+## [100] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+## [109] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+## [118] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+## [127] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+## [136] "red" "red" "red" "red" "red" "red" "red" "red" "red"
+## [145] "red" "red" "red"
+```
+
+```r
+#change the value to "green" where random_values_v2 equals 1
+edge_colors[random_values_v2 == 1] = "green" 
+edge_colors
+```
+
+```
+##   [1] "green" "green" "red"   "red"   "green" "red"  
+##   [7] "green" "green" "green" "green" "green" "red"  
+##  [13] "red"   "green" "red"   "red"   "green" "red"  
+##  [19] "red"   "red"   "red"   "red"   "green" "red"  
+##  [25] "green" "green" "red"   "red"   "red"   "red"  
+##  [31] "red"   "green" "red"   "green" "red"   "green"
+##  [37] "red"   "red"   "green" "red"   "green" "red"  
+##  [43] "red"   "red"   "red"   "green" "red"   "green"
+##  [49] "green" "green" "red"   "red"   "red"   "red"  
+##  [55] "green" "red"   "green" "red"   "red"   "green"
+##  [61] "red"   "green" "green" "green" "green" "red"  
+##  [67] "green" "green" "red"   "red"   "green" "red"  
+##  [73] "red"   "red"   "green" "red"   "red"   "red"  
+##  [79] "green" "red"   "green" "green" "red"   "red"  
+##  [85] "red"   "red"   "green" "green" "green" "green"
+##  [91] "green" "green" "green" "green" "green" "green"
+##  [97] "red"   "green" "green" "green" "red"   "red"  
+## [103] "red"   "green" "green" "red"   "red"   "green"
+## [109] "red"   "red"   "green" "red"   "red"   "red"  
+## [115] "green" "green" "green" "green" "green" "green"
+## [121] "green" "green" "green" "red"   "red"   "red"  
+## [127] "red"   "red"   "red"   "green" "red"   "green"
+## [133] "green" "green" "red"   "green" "green" "green"
+## [139] "red"   "green" "red"   "red"   "red"   "green"
+## [145] "green" "green" "green"
+```
+
+```r
+random_values_v2
+```
+
+```
+##   [1]  1  1 -1 -1  1 -1  1  1  1  1  1 -1 -1  1 -1 -1  1 -1
+##  [19] -1 -1 -1 -1  1 -1  1  1 -1 -1 -1 -1 -1  1 -1  1 -1  1
+##  [37] -1 -1  1 -1  1 -1 -1 -1 -1  1 -1  1  1  1 -1 -1 -1 -1
+##  [55]  1 -1  1 -1 -1  1 -1  1  1  1  1 -1  1  1 -1 -1  1 -1
+##  [73] -1 -1  1 -1 -1 -1  1 -1  1  1 -1 -1 -1 -1  1  1  1  1
+##  [91]  1  1  1  1  1  1 -1  1  1  1 -1 -1 -1  1  1 -1 -1  1
+## [109] -1 -1  1 -1 -1 -1  1  1  1  1  1  1  1  1  1 -1 -1 -1
+## [127] -1 -1 -1  1 -1  1  1  1 -1  1  1  1 -1  1 -1 -1 -1  1
+## [145]  1  1  1
+```
+
+```r
+g_hitech_hatred = graph_from_adjacency_matrix(M_sp_hatred, 
+                                                mode = "directed", weighted = TRUE)
+```
+---
+
+```r
+plot(g_hitech_hatred, 
+     edge.color = edge_colors,
+     edge.curved = .5,
+     vertex.size = 5,
+     layout = l)
+```
+
+![](01-data-structures-slides_files/figure-html/plot-hate-to-graph-contd-1.png)&lt;!-- --&gt;
+---
+
+## Relational Data structures
+
+There are two ways to represent relational data: 
+
+- Matrix notation, 
+
+- **Edgelist Notation**.
+
+---
+## Relational data in the form of Edgelist notation
+
+Below is a Krackhardt's (1999) small hi-tech computer firm dataset. It looks at 36 employees and managers from the firm and their friendship ties.
+
+
+```r
+df_edgelist = fread( # read data as data.table
+  file.path(bucket, "data","Hi-tech_edgelist.csv"))
+df_edgelist
+```
+
+```
+##       from  to
+##   1:   Nan Bob
+##   2:   Mel Bob
+##   3:  Jack Bob
+##   4: Chris Bob
+##   5:  Dale Bob
+##  ---          
+## 143:  Carl Irv
+## 144:  Dale Irv
+## 145:   Dan Irv
+## 146:   Pat Irv
+## 147:   Pat Jim
+```
+
+---
+
+We can also add our artificially-made "friendship weight" and "friend vs. enemy" edge attributes as separate columns to the edgelist:
+
+
+```r
+df_edgelist[, weight:= random_values]
+df_edgelist[, frenemy:= random_values_v2]
+df_edgelist
+```
+
+```
+##       from  to weight frenemy
+##   1:   Nan Bob      4       1
+##   2:   Mel Bob      5       1
+##   3:  Jack Bob      4      -1
+##   4: Chris Bob      3      -1
+##   5:  Dale Bob      1       1
+##  ---                         
+## 143:  Carl Irv      4      -1
+## 144:  Dale Irv      4       1
+## 145:   Dan Irv      5       1
+## 146:   Pat Irv      5       1
+## 147:   Pat Jim      2       1
+```
+---
+
+Next is to use the edgelist to generate an igraph object:
+
+
+```r
+g_hitech_from_edgelist = graph_from_data_frame(df_edgelist, directed = TRUE)
+g_hitech_from_edgelist
+```
+
+```
+## IGRAPH 7672790 DNW- 33 147 -- 
+## + attr: name (v/c), weight (e/n), frenemy (e/n)
+## + edges from 7672790 (vertex names):
+##  [1] Nan  -&gt;Bob  Mel  -&gt;Bob  Jack -&gt;Bob  Chris-&gt;Bob 
+##  [5] Dale -&gt;Bob  Ben  -&gt;Bob  Len  -&gt;Carl Hal  -&gt;Carl
+##  [9] Tom  -&gt;Dale Rick -&gt;Dale Gary -&gt;Dale Irv  -&gt;Dale
+## [13] Bob  -&gt;Dale Chris-&gt;Dale Mel  -&gt;Dale Alex -&gt;Dale
+## [17] Steve-&gt;Ev   Rick -&gt;Ev   Abe  -&gt;Fred Carl -&gt;Fred
+## [21] Upton-&gt;Fred Hal  -&gt;Fred Chris-&gt;Gary Nan  -&gt;Gary
+## [25] Rick -&gt;Gary Carl -&gt;Hal  Nan  -&gt;Ivo  Upton-&gt;Ivo 
+## [29] Chris-&gt;Ivo  Bob  -&gt;Jack Robin-&gt;Ken  Tom  -&gt;Ken 
+## + ... omitted several edges
+```
+
+This is a directed and weighted graph (DNW) with *33* (not 36!) vertices and 147 ties. Why do you think we missed 3 out of 36 vertices?
+
+---
+
+Next is to use the edgelist to generate an igraph object:
+
+
+```r
+g_hitech_from_edgelist = graph_from_data_frame(df_edgelist, directed = TRUE)
+g_hitech_from_edgelist
+```
+
+```
+## IGRAPH cc91f9e DNW- 33 147 -- 
+## + attr: name (v/c), weight (e/n), frenemy (e/n)
+## + edges from cc91f9e (vertex names):
+##  [1] Nan  -&gt;Bob  Mel  -&gt;Bob  Jack -&gt;Bob  Chris-&gt;Bob 
+##  [5] Dale -&gt;Bob  Ben  -&gt;Bob  Len  -&gt;Carl Hal  -&gt;Carl
+##  [9] Tom  -&gt;Dale Rick -&gt;Dale Gary -&gt;Dale Irv  -&gt;Dale
+## [13] Bob  -&gt;Dale Chris-&gt;Dale Mel  -&gt;Dale Alex -&gt;Dale
+## [17] Steve-&gt;Ev   Rick -&gt;Ev   Abe  -&gt;Fred Carl -&gt;Fred
+## [21] Upton-&gt;Fred Hal  -&gt;Fred Chris-&gt;Gary Nan  -&gt;Gary
+## [25] Rick -&gt;Gary Carl -&gt;Hal  Nan  -&gt;Ivo  Upton-&gt;Ivo 
+## [29] Chris-&gt;Ivo  Bob  -&gt;Jack Robin-&gt;Ken  Tom  -&gt;Ken 
+## + ... omitted several edges
+```
+
+This is a directed and weighted graph (DNW) with *33* (not 36!) vertices and 147 ties. Why do you think we missed 3 out of 36 vertices? **Because we had 3 isolate vertices (i.e., with no ties).** This does not mean we cannot register isolate nodes with edgelist datasets, however. I will come to that.
+
+---
+
+```r
+plot(g_hitech_hatred, 
+     edge.color = edge_colors,
+     edge.curved = .5,
+     vertex.size = 5,
+     layout = l)
+```
+
+![](01-data-structures-slides_files/figure-html/plot-hate-to-graph-contd-again-1.png)&lt;!-- --&gt;
+
+---
+Next is to use the edgelist to generate an igraph object:
+
+
+```r
+g_hitech_from_edgelist
+```
+
+```
+## IGRAPH cc91f9e DNW- 33 147 -- 
+## + attr: name (v/c), weight (e/n), frenemy (e/n)
+## + edges from cc91f9e (vertex names):
+##  [1] Nan  -&gt;Bob  Mel  -&gt;Bob  Jack -&gt;Bob  Chris-&gt;Bob 
+##  [5] Dale -&gt;Bob  Ben  -&gt;Bob  Len  -&gt;Carl Hal  -&gt;Carl
+##  [9] Tom  -&gt;Dale Rick -&gt;Dale Gary -&gt;Dale Irv  -&gt;Dale
+## [13] Bob  -&gt;Dale Chris-&gt;Dale Mel  -&gt;Dale Alex -&gt;Dale
+## [17] Steve-&gt;Ev   Rick -&gt;Ev   Abe  -&gt;Fred Carl -&gt;Fred
+## [21] Upton-&gt;Fred Hal  -&gt;Fred Chris-&gt;Gary Nan  -&gt;Gary
+## [25] Rick -&gt;Gary Carl -&gt;Hal  Nan  -&gt;Ivo  Upton-&gt;Ivo 
+## [29] Chris-&gt;Ivo  Bob  -&gt;Jack Robin-&gt;Ken  Tom  -&gt;Ken 
+## + ... omitted several edges
+```
+
+This graph has three network attributes: 
+- names at vertex level in character format (although 3 missing at the moment),
+- weight at edge level, numeric
+- frenemy at edge level, numeric.
+---
+
+```r
+plot(g_hitech_from_edgelist, 
+     edge.color = edge_colors,
+     edge.width = E(g_hitech_from_edgelist)$weight,
+     edge.curved = .5,
+     vertex.size = 5,
+     layout = l)
+```
+
+![](01-data-structures-slides_files/figure-html/plot-graph-from-edgelist-1.png)&lt;!-- --&gt;
+
+Note that we were able to register two edge attributes using the edgelist notation quite easily; and now using both in our visualization!
+---
+class: inverse, center, middle
+
+# 2- Vertex Attribute Data Structure
+
+---
+
+## Network Graphs and Data Structures (cont'd)
+
+
+If we are adding all three types of data, the R graph object will request:
+
+- Relational data and edge attributes as in one dataset (which I will shortly call as **"Relational data"**; but keep in mind that edge attributes go in this one as well)
+
+- Node attribute data in a separate dataset. (which I will shortly call as **"Vertex/node attribute data"**)
+
+---
+
+## Vertex Attribute data
+
+the vertex attribute data always comes in the edgelist format, and has to include the exact same labels used in the:
+
+- Relational data matrix notation row and column names, or
+
+- Relational data edgelist notation entries in the first two columns: "from" and "to" (the column names do not matter -- could be named as "ego" and "alter", and so forth. Mainly informative.)
+
+---
+## Vertex Attribute data (cont'd)
+
+Below is the vertex attributes Krackhardt's (1999) small hi-tech computer firm dataset: whether the employees (including managers) support unionization in the firm or not:
+
+
+```r
+df_vattr = fread( # read data as data.table
+  file.path(bucket, "data","Hi-tech_vertex_attributes.csv"))
+df_vattr
+```
+
+```
+##     labels union_support   union_support_text
+##  1:    Abe             0           no support
+##  2:    Bob             0           no support
+##  3:   Carl             0           no support
+##  4:   Dale             2               oppose
+##  5:     Ev             0           no support
+##  6:   Fred             0           no support
+##  7:   Gary             0           no support
+##  8:    Hal             1              support
+##  9:    Ivo             1              support
+## 10:   Jack             1              support
+## 11:    Ken             0           no support
+## 12:    Len             0           no support
+## 13:    Mel             2               oppose
+## 14:    Nan             0           no support
+## 15:   Ovid             1              support
+## 16:    Pat             3 oppose + top manager
+## 17: Quincy             0           no support
+## 18:  Robin             2               oppose
+## 19:  Steve             3 oppose + top manager
+## 20:    Tom             0           no support
+## 21:  Upton             0           no support
+## 22:    Vic             0           no support
+## 23:   Walt             0           no support
+## 24:   Rick             0           no support
+## 25:   York             0           no support
+## 26:    Zoe             0           no support
+## 27:   Alex             0           no support
+## 28:    Ben             0           no support
+## 29:  Chris             1              support
+## 30:    Dan             0           no support
+## 31:   Earl             0           no support
+## 32:   Fran             0           no support
+## 33:  Gerry             0           no support
+## 34:   Hugh             0           no support
+## 35:    Irv             0           no support
+## 36:    Jim             3 oppose + top manager
+##     labels union_support   union_support_text
+```
+
+---
+Now, let's add our `df_vattr` data to the graph objects. First, using the matrix notation.
+
+Honestly, I couldn't find any straight-forward way of adding the attribute data directly to the graph usinfg the `graph_from_adjacency_matrix` notation. So this is what I will do:
+
+
+```r
+#g_hitech = graph_from_adjacency_matrix(M_sp)
+g_hitech = set_vertex_attr(g_hitech, "union_support", 
+                           value = df_vattr$union_support)
+g_hitech = set_vertex_attr(g_hitech, "union_support_text", 
+                           value = df_vattr$union_support_text)
+g_hitech
+```
+
+```
+## IGRAPH 88e2b36 DN-- 36 147 -- 
+## + attr: name (v/c), union_support (v/n),
+## | union_support_text (v/c)
+## + edges from 88e2b36 (vertex names):
+##  [1] Dale -&gt;Bob  Jack -&gt;Bob  Mel  -&gt;Bob  Nan  -&gt;Bob 
+##  [5] Ben  -&gt;Bob  Chris-&gt;Bob  Hal  -&gt;Carl Len  -&gt;Carl
+##  [9] Bob  -&gt;Dale Gary -&gt;Dale Mel  -&gt;Dale Tom  -&gt;Dale
+## [13] Rick -&gt;Dale Alex -&gt;Dale Chris-&gt;Dale Irv  -&gt;Dale
+## [17] Steve-&gt;Ev   Rick -&gt;Ev   Abe  -&gt;Fred Carl -&gt;Fred
+## [21] Hal  -&gt;Fred Upton-&gt;Fred Nan  -&gt;Gary Rick -&gt;Gary
+## [25] Chris-&gt;Gary Carl -&gt;Hal  Nan  -&gt;Ivo  Upton-&gt;Ivo 
+## + ... omitted several edges
+```
+
+---
+Now using the edgelist notation:
+
+
+```r
+#g_hitech_from_edgelist = graph_from_data_frame(df_edgelist, directed = TRUE)
+g_hitech_from_edgelist_and_vattr = graph_from_data_frame(
+  df_edgelist, directed = TRUE, vertices = df_vattr)
+g_hitech_from_edgelist_and_vattr
+```
+
+```
+## IGRAPH 21f1888 DNW- 36 147 -- 
+## + attr: name (v/c), union_support (v/n),
+## | union_support_text (v/c), weight (e/n), frenemy
+## | (e/n)
+## + edges from 21f1888 (vertex names):
+##  [1] Nan  -&gt;Bob  Mel  -&gt;Bob  Jack -&gt;Bob  Chris-&gt;Bob 
+##  [5] Dale -&gt;Bob  Ben  -&gt;Bob  Len  -&gt;Carl Hal  -&gt;Carl
+##  [9] Tom  -&gt;Dale Rick -&gt;Dale Gary -&gt;Dale Irv  -&gt;Dale
+## [13] Bob  -&gt;Dale Chris-&gt;Dale Mel  -&gt;Dale Alex -&gt;Dale
+## [17] Steve-&gt;Ev   Rick -&gt;Ev   Abe  -&gt;Fred Carl -&gt;Fred
+## [21] Upton-&gt;Fred Hal  -&gt;Fred Chris-&gt;Gary Nan  -&gt;Gary
+## + ... omitted several edges
+```
+
+We got our 3 vertices back!!!!!
+
+---
+
+class: inverse, center, middle
+
+# Data Structures for Affiliation Networks
+# a.k.a "two-mode" or "bipartite" networks
+
+---
+# Data Structures for Affiliation Networks
+
+So far, we worked with "one-mode" networks: all nodes were people, and they were connected to one another.
+
+But in some cases, we are interested in looking at connections between, for example, 
+
+- people and institutions (which NGOs are people affiliated with),
+- which countries are affiliated with what unions? (e.g., countries affiliated with EU, NATO, etc.)
+
+Which means we have more than one class of *entities*
+
+---
+
+# Matrix notation for Affiliation Networks
+
+Below is Joe Galaskiewicz's (1985) "CEOs and Clubs" dataset. This data gives the affiliation network of 26 CEO's and their spouses of major corporations and banks in the Minneapolis area to 15 clubs, corporate and cultural boards.
+
+
+```r
+M_ceo = read.table(file.path(bucket, "data","galaskie_ceos_sociomatrix.txt"),
+                 header=TRUE,row.names=1)
+M_ceo
+```
+
+```
+##       Club.1 Club.2 Club.3 Club.4 Club.5 Club.6 Club.7
+## CEO1       0      0      1      1      0      0      0
+## CEO2       0      0      1      0      1      0      1
+## CEO3       0      0      1      0      0      0      0
+## CEO4       0      1      1      0      0      0      0
+## CEO5       0      0      1      0      0      0      0
+## CEO6       0      1      1      0      0      0      0
+## CEO7       0      0      1      1      0      0      0
+## CEO8       0      0      0      1      0      0      1
+## CEO9       1      0      0      1      0      0      0
+## CEO10      0      0      1      0      0      0      0
+## CEO11      0      1      1      0      0      0      0
+## CEO12      0      0      0      1      0      0      1
+## CEO13      0      0      1      1      1      0      0
+## CEO14      0      1      1      1      0      0      0
+## CEO15      0      1      1      0      0      1      0
+## CEO16      0      1      1      0      0      1      0
+## CEO17      0      1      1      0      1      0      0
+## CEO18      0      0      0      1      0      0      0
+## CEO19      1      0      1      1      0      0      1
+## CEO20      0      1      1      1      0      0      0
+## CEO21      0      0      1      1      0      0      0
+## CEO22      0      0      1      0      0      0      0
+## CEO23      0      1      1      0      0      1      0
+## CEO24      1      0      1      1      0      1      0
+## CEO25      0      1      1      0      0      0      0
+## CEO26      0      1      1      0      0      0      0
+##       Club.8 Club.9 Club.10 Club.11 Club.12 Club.13 Club.14
+## CEO1       0      1       0       0       0       0       0
+## CEO2       0      0       0       0       0       0       0
+## CEO3       0      0       0       0       1       0       0
+## CEO4       0      0       0       0       0       0       0
+## CEO5       0      0       0       0       0       1       1
+## CEO6       0      0       0       0       0       0       1
+## CEO7       0      0       1       1       0       0       0
+## CEO8       0      0       1       0       0       0       0
+## CEO9       1      0       1       0       0       0       0
+## CEO10      0      1       0       0       0       0       0
+## CEO11      0      1       0       0       0       0       0
+## CEO12      0      0       0       0       0       0       0
+## CEO13      0      1       0       0       0       0       0
+## CEO14      0      0       0       1       1       1       0
+## CEO15      0      0       0       0       0       1       0
+## CEO16      1      0       0       0       0       0       1
+## CEO17      0      0       0       1       1       0       0
+## CEO18      0      1       0       0       1       1       0
+## CEO19      0      1       0       0       0       0       0
+## CEO20      0      0       0       1       0       0       0
+## CEO21      1      0       0       0       0       0       0
+## CEO22      1      0       0       0       0       0       0
+## CEO23      0      0       0       0       0       0       0
+## CEO24      0      0       0       0       0       0       0
+## CEO25      0      0       0       0       0       1       0
+## CEO26      0      0       0       0       1       0       0
+##       Club.15
+## CEO1        0
+## CEO2        0
+## CEO3        0
+## CEO4        1
+## CEO5        0
+## CEO6        0
+## CEO7        0
+## CEO8        0
+## CEO9        0
+## CEO10       0
+## CEO11       0
+## CEO12       0
+## CEO13       0
+## CEO14       1
+## CEO15       1
+## CEO16       0
+## CEO17       1
+## CEO18       1
+## CEO19       0
+## CEO20       1
+## CEO21       0
+## CEO22       1
+## CEO23       1
+## CEO24       1
+## CEO25       0
+## CEO26       0
+```
+
+---
+# Matrix notation for Affiliation Networks
+
+---
+# Matrix notation for Affiliation Networks
+
+Note that the rownames and column names are different.
+
+This also means that our *incidence matrix* (not adjacency matrix!) is not necessarily square:
+
+(An incidence matrix shows the relationship between two classes of objects.)
+
+
+```r
+dim(M_ceo)
+```
+
+```
+## [1] 26 15
+```
+
+We have 26 CEOs affiliated with 16 social clubs.
+
+---
+# Graph from indicence matrix
+
+The logic is pretty much the same, but we will use a different function to register the affiliation matrix to the graph:
+
+
+```r
+g_ceo = graph_from_incidence_matrix(M_ceo, directed = FALSE)
+g_ceo
+```
+
+```
+## IGRAPH b9b8b3a UN-B 41 98 -- 
+## + attr: type (v/l), name (v/c)
+## + edges from b9b8b3a (vertex names):
+##  [1] CEO1 --Club.3  CEO1 --Club.4  CEO1 --Club.9 
+##  [4] CEO2 --Club.3  CEO2 --Club.5  CEO2 --Club.7 
+##  [7] CEO3 --Club.3  CEO3 --Club.12 CEO4 --Club.2 
+## [10] CEO4 --Club.3  CEO4 --Club.15 CEO5 --Club.3 
+## [13] CEO5 --Club.13 CEO5 --Club.14 CEO6 --Club.2 
+## [16] CEO6 --Club.3  CEO6 --Club.14 CEO7 --Club.3 
+## [19] CEO7 --Club.4  CEO7 --Club.10 CEO7 --Club.11
+## [22] CEO8 --Club.4  CEO8 --Club.7  CEO8 --Club.10
+## + ... omitted several edges
+```
+
+Please note that affiliation networks are generally not directed -- if a person is affiliated to a club, the club has that person as a member, so the relationship is most frequently mutual.
+
+---
+# Graph from indicence matrix
+
+
+```r
+g_ceo
+```
+
+```
+## IGRAPH b9b8b3a UN-B 41 98 -- 
+## + attr: type (v/l), name (v/c)
+## + edges from b9b8b3a (vertex names):
+##  [1] CEO1 --Club.3  CEO1 --Club.4  CEO1 --Club.9 
+##  [4] CEO2 --Club.3  CEO2 --Club.5  CEO2 --Club.7 
+##  [7] CEO3 --Club.3  CEO3 --Club.12 CEO4 --Club.2 
+## [10] CEO4 --Club.3  CEO4 --Club.15 CEO5 --Club.3 
+## [13] CEO5 --Club.13 CEO5 --Club.14 CEO6 --Club.2 
+## [16] CEO6 --Club.3  CEO6 --Club.14 CEO7 --Club.3 
+## [19] CEO7 --Club.4  CEO7 --Club.10 CEO7 --Club.11
+## [22] CEO8 --Club.4  CEO8 --Club.7  CEO8 --Club.10
+## + ... omitted several edges
+```
+
+Different from `graph_from_adjacency_matrix()` function, `graph_from_incidence_matrix()` automatically generates a vertex attribute called "type": in our example, this helps us distinguish CEOs from clubs.
+
+---
+
+```r
+V(g_ceo)$type
+```
+
+```
+##  [1] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+## [10] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+## [19] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE
+## [28]  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
+## [37]  TRUE  TRUE  TRUE  TRUE  TRUE
+```
+---
+# Edgelist notation for Affiliation Networks
+
+---
+# Edgelist notation for Affiliation Networks
+
+We can also use edgelists for creating two-mode network graphs. But keep in mind that the `graph_from_data_frame()` function will not automatically detect the graph as two-mode network. Therefore you will need to make sure that your vertex attribute data has that information.
+
+*Note:* there is a separate package that is designed for two-mode networks called `tnet (https://toreopsahl.com/tnet/)`, but I believe this is beyond the scope of this tutorial, but feel free to check it out.
+
+
+---
+# Edgelist notation for Affiliation Networks
+
+
+```r
+df_ceo_edgelist = fread( # read data as data.table
+  file.path(bucket, "data","galaskie_ceos_edgelist.csv"))
+df_ceo_edgelist
+```
+
+```
+##      from      to
+##  1: CEO24  Club 1
+##  2:  CEO9  Club 1
+##  3: CEO19  Club 1
+##  4: CEO15  Club 2
+##  5: CEO25  Club 2
+##  6: CEO17  Club 2
+##  7:  CEO6  Club 2
+##  8: CEO11  Club 2
+##  9:  CEO4  Club 2
+## 10: CEO20  Club 2
+## 11: CEO14  Club 2
+## 12: CEO16  Club 2
+## 13: CEO26  Club 2
+## 14: CEO23  Club 2
+## 15:  CEO1  Club 3
+## 16: CEO14  Club 3
+## 17:  CEO6  Club 3
+## 18:  CEO2  Club 3
+## 19:  CEO7  Club 3
+## 20: CEO11  Club 3
+## 21:  CEO3  Club 3
+## 22:  CEO5  Club 3
+## 23: CEO15  Club 3
+## 24:  CEO4  Club 3
+## 25: CEO24  Club 3
+## 26: CEO10  Club 3
+## 27: CEO21  Club 3
+## 28: CEO16  Club 3
+## 29: CEO17  Club 3
+## 30: CEO23  Club 3
+## 31: CEO19  Club 3
+## 32: CEO20  Club 3
+## 33: CEO13  Club 3
+## 34: CEO26  Club 3
+## 35: CEO22  Club 3
+## 36: CEO25  Club 3
+## 37:  CEO1  Club 4
+## 38: CEO12  Club 4
+## 39: CEO24  Club 4
+## 40: CEO19  Club 4
+## 41: CEO21  Club 4
+## 42: CEO13  Club 4
+## 43: CEO18  Club 4
+## 44:  CEO9  Club 4
+## 45:  CEO8  Club 4
+## 46: CEO20  Club 4
+## 47:  CEO7  Club 4
+## 48: CEO14  Club 4
+## 49:  CEO2  Club 5
+## 50: CEO13  Club 5
+## 51: CEO17  Club 5
+## 52: CEO24  Club 6
+## 53: CEO15  Club 6
+## 54: CEO16  Club 6
+## 55: CEO23  Club 6
+## 56: CEO12  Club 7
+## 57:  CEO8  Club 7
+## 58:  CEO2  Club 7
+## 59: CEO19  Club 7
+## 60: CEO21  Club 8
+## 61: CEO22  Club 8
+## 62:  CEO9  Club 8
+## 63: CEO16  Club 8
+## 64: CEO10  Club 9
+## 65:  CEO1  Club 9
+## 66: CEO11  Club 9
+## 67: CEO18  Club 9
+## 68: CEO13  Club 9
+## 69: CEO19  Club 9
+## 70:  CEO8 Club 10
+## 71:  CEO7 Club 10
+## 72:  CEO9 Club 10
+## 73:  CEO7 Club 11
+## 74: CEO17 Club 11
+## 75: CEO14 Club 11
+## 76: CEO20 Club 11
+## 77: CEO14 Club 12
+## 78:  CEO3 Club 12
+## 79: CEO18 Club 12
+## 80: CEO17 Club 12
+## 81: CEO26 Club 12
+## 82: CEO25 Club 13
+## 83: CEO18 Club 13
+## 84: CEO15 Club 13
+## 85: CEO14 Club 13
+## 86:  CEO5 Club 13
+## 87:  CEO6 Club 14
+## 88:  CEO5 Club 14
+## 89: CEO16 Club 14
+## 90:  CEO4 Club 15
+## 91: CEO24 Club 15
+## 92: CEO18 Club 15
+## 93: CEO23 Club 15
+## 94: CEO15 Club 15
+## 95: CEO20 Club 15
+## 96: CEO17 Club 15
+## 97: CEO22 Club 15
+## 98: CEO14 Club 15
+##      from      to
+```
+
+---
+# Edgelist notation for Affiliation Networks
+
+
+```r
+df_ceo_vattr = fread( # read data as data.table
+  file.path(bucket, "data","galaskie_ceos_vertex_attributes.csv"))
+df_ceo_vattr
+```
+
+```
+##      labels type
+##  1:    CEO1  ceo
+##  2:    CEO2  ceo
+##  3:    CEO3  ceo
+##  4:    CEO4  ceo
+##  5:    CEO5  ceo
+##  6:    CEO6  ceo
+##  7:    CEO7  ceo
+##  8:    CEO8  ceo
+##  9:    CEO9  ceo
+## 10:   CEO10  ceo
+## 11:   CEO11  ceo
+## 12:   CEO12  ceo
+## 13:   CEO13  ceo
+## 14:   CEO14  ceo
+## 15:   CEO15  ceo
+## 16:   CEO16  ceo
+## 17:   CEO17  ceo
+## 18:   CEO18  ceo
+## 19:   CEO19  ceo
+## 20:   CEO20  ceo
+## 21:   CEO21  ceo
+## 22:   CEO22  ceo
+## 23:   CEO23  ceo
+## 24:   CEO24  ceo
+## 25:   CEO25  ceo
+## 26:   CEO26  ceo
+## 27:  Club 1 club
+## 28:  Club 2 club
+## 29:  Club 3 club
+## 30:  Club 4 club
+## 31:  Club 5 club
+## 32:  Club 6 club
+## 33:  Club 7 club
+## 34:  Club 8 club
+## 35:  Club 9 club
+## 36: Club 10 club
+## 37: Club 11 club
+## 38: Club 12 club
+## 39: Club 13 club
+## 40: Club 14 club
+## 41: Club 15 club
+##      labels type
+```
+
+---
+# Edgelist notation for Affiliation Networks
+
+
+```r
+g_ceo_from_edgelist = graph_from_data_frame(
+  df_ceo_edgelist, directed = FALSE, vertices = df_ceo_vattr)
+g_ceo_from_edgelist
+```
+
+```
+## IGRAPH 8d49139 UN-B 41 98 -- 
+## + attr: name (v/c), type (v/c)
+## + edges from 8d49139 (vertex names):
+##  [1] CEO24--Club 1 CEO9 --Club 1 CEO19--Club 1 CEO15--Club 2
+##  [5] CEO25--Club 2 CEO17--Club 2 CEO6 --Club 2 CEO11--Club 2
+##  [9] CEO4 --Club 2 CEO20--Club 2 CEO14--Club 2 CEO16--Club 2
+## [13] CEO26--Club 2 CEO23--Club 2 CEO1 --Club 3 CEO14--Club 3
+## [17] CEO6 --Club 3 CEO2 --Club 3 CEO7 --Club 3 CEO11--Club 3
+## [21] CEO3 --Club 3 CEO5 --Club 3 CEO15--Club 3 CEO4 --Club 3
+## [25] CEO24--Club 3 CEO10--Club 3 CEO21--Club 3 CEO16--Club 3
+## [29] CEO17--Club 3 CEO23--Club 3 CEO19--Club 3 CEO20--Club 3
+## + ... omitted several edges
+```
+
+---
+
+class: inverse, center, middle
+
+# One more thing
+#before we conclude...
+
+---
+
+class: inverse, center, middle
+
+# One-mode projections of 
+# affiliation networks
+
+---
+# One-mode projections of affiliation networks
+
+In some cases, we are not particularly interested in which CEOs go to which sociall clubs, but rather we want to know:
+
+- which CEOs attend the same clubs?
+
+or,
+
+- Which social clubs share CEO members?
+
+---
+# One-mode projections of affiliation networks (cont'd)
+
+This means, if we could find a way to convert the CEO-club connections to CEO-CEO connections or club-club connections, what would be more than enough. We would then use those "one-mode projection" adjacency matrices for our analyses.
+
+---
+
+# One-mode projections of affiliation networks (cont'd)
+
+In matrix notation, this can simply be achieved by *matrix multiplication*.
+
+CEO to CEO connections:
+
+
+```r
+# multiply M_ceo with its transpose 
+# [26x15] %*% [15x26] --&gt; [26,26] (CEO to CEO)
+M1_ceo = as.matrix(M_ceo) %*% t(as.matrix(M_ceo))
+M1_ceo
+```
+
+```
+##       CEO1 CEO2 CEO3 CEO4 CEO5 CEO6 CEO7 CEO8 CEO9 CEO10
+## CEO1     3    1    1    1    1    1    2    1    1     2
+## CEO2     1    3    1    1    1    1    1    1    0     1
+## CEO3     1    1    2    1    1    1    1    0    0     1
+## CEO4     1    1    1    3    1    2    1    0    0     1
+## CEO5     1    1    1    1    3    2    1    0    0     1
+## CEO6     1    1    1    2    2    3    1    0    0     1
+## CEO7     2    1    1    1    1    1    4    2    2     1
+## CEO8     1    1    0    0    0    0    2    3    2     0
+## CEO9     1    0    0    0    0    0    2    2    4     0
+## CEO10    2    1    1    1    1    1    1    0    0     2
+## CEO11    2    1    1    2    1    2    1    0    0     2
+## CEO12    1    1    0    0    0    0    1    2    1     0
+## CEO13    3    2    1    1    1    1    2    1    1     2
+## CEO14    2    1    2    3    2    2    3    1    1     1
+## CEO15    1    1    1    3    2    2    1    0    0     1
+## CEO16    1    1    1    2    2    3    1    0    1     1
+## CEO17    1    2    2    3    1    2    2    0    0     1
+## CEO18    2    0    1    1    1    0    1    1    1     1
+## CEO19    3    2    1    1    1    1    2    2    2     2
+## CEO20    2    1    1    3    1    2    3    1    1     1
+## CEO21    2    1    1    1    1    1    2    1    2     1
+## CEO22    1    1    1    2    1    1    1    0    1     1
+## CEO23    1    1    1    3    1    2    1    0    0     1
+## CEO24    2    1    1    2    1    1    2    1    2     1
+## CEO25    1    1    1    2    2    2    1    0    0     1
+## CEO26    1    1    2    2    1    2    1    0    0     1
+##       CEO11 CEO12 CEO13 CEO14 CEO15 CEO16 CEO17 CEO18 CEO19
+## CEO1      2     1     3     2     1     1     1     2     3
+## CEO2      1     1     2     1     1     1     2     0     2
+## CEO3      1     0     1     2     1     1     2     1     1
+## CEO4      2     0     1     3     3     2     3     1     1
+## CEO5      1     0     1     2     2     2     1     1     1
+## CEO6      2     0     1     2     2     3     2     0     1
+## CEO7      1     1     2     3     1     1     2     1     2
+## CEO8      0     2     1     1     0     0     0     1     2
+## CEO9      0     1     1     1     0     1     0     1     2
+## CEO10     2     0     2     1     1     1     1     1     2
+## CEO11     3     0     2     2     2     2     2     1     2
+## CEO12     0     2     1     1     0     0     0     1     2
+## CEO13     2     1     4     2     1     1     2     2     3
+## CEO14     2     1     2     7     4     2     5     4     2
+## CEO15     2     0     1     4     5     3     3     2     1
+## CEO16     2     0     1     2     3     5     2     0     1
+## CEO17     2     0     2     5     3     2     6     2     1
+## CEO18     1     1     2     4     2     0     2     5     2
+## CEO19     2     2     3     2     1     1     1     2     5
+## CEO20     2     1     2     5     3     2     4     2     2
+## CEO21     1     1     2     2     1     2     1     1     2
+## CEO22     1     0     1     2     2     2     2     1     1
+## CEO23     2     0     1     3     4     3     3     1     1
+## CEO24     1     1     2     3     3     2     2     2     3
+## CEO25     2     0     1     3     3     2     2     1     1
+## CEO26     2     0     1     3     2     2     3     1     1
+##       CEO20 CEO21 CEO22 CEO23 CEO24 CEO25 CEO26
+## CEO1      2     2     1     1     2     1     1
+## CEO2      1     1     1     1     1     1     1
+## CEO3      1     1     1     1     1     1     2
+## CEO4      3     1     2     3     2     2     2
+## CEO5      1     1     1     1     1     2     1
+## CEO6      2     1     1     2     1     2     2
+## CEO7      3     2     1     1     2     1     1
+## CEO8      1     1     0     0     1     0     0
+## CEO9      1     2     1     0     2     0     0
+## CEO10     1     1     1     1     1     1     1
+## CEO11     2     1     1     2     1     2     2
+## CEO12     1     1     0     0     1     0     0
+## CEO13     2     2     1     1     2     1     1
+## CEO14     5     2     2     3     3     3     3
+## CEO15     3     1     2     4     3     3     2
+## CEO16     2     2     2     3     2     2     2
+## CEO17     4     1     2     3     2     2     3
+## CEO18     2     1     1     1     2     1     1
+## CEO19     2     2     1     1     3     1     1
+## CEO20     5     2     2     3     3     2     2
+## CEO21     2     3     2     1     2     1     1
+## CEO22     2     2     3     2     2     1     1
+## CEO23     3     1     2     4     3     2     2
+## CEO24     3     2     2     3     5     1     1
+## CEO25     2     1     1     2     1     3     2
+## CEO26     2     1     1     2     1     2     3
+```
+
+---
+# One-mode projections of affiliation networks (cont'd)
+
+Club to club connections:
+
+
+```r
+# multiply transpose of M_ceo with itself (M_ceo)
+# [15x26] %*% [26x15] --&gt; [26,26] (CEO to CEO)
+M2_ceo = t(as.matrix(M_ceo)) %*% as.matrix(M_ceo)
+M2_ceo
+```
+
+```
+##         Club.1 Club.2 Club.3 Club.4 Club.5 Club.6 Club.7
+## Club.1       3      0      2      3      0      1      1
+## Club.2       0     11     11      2      1      3      0
+## Club.3       2     11     22      8      3      4      2
+## Club.4       3      2      8     12      1      1      3
+## Club.5       0      1      3      1      3      0      1
+## Club.6       1      3      4      1      0      4      0
+## Club.7       1      0      2      3      1      0      4
+## Club.8       1      1      3      2      0      1      0
+## Club.9       1      1      5      4      1      0      1
+## Club.10      1      0      1      3      0      0      1
+## Club.11      0      3      4      3      1      0      0
+## Club.12      0      3      4      2      1      0      0
+## Club.13      0      3      4      2      0      1      0
+## Club.14      0      2      3      0      0      1      0
+## Club.15      1      6      8      4      1      3      0
+##         Club.8 Club.9 Club.10 Club.11 Club.12 Club.13
+## Club.1       1      1       1       0       0       0
+## Club.2       1      1       0       3       3       3
+## Club.3       3      5       1       4       4       4
+## Club.4       2      4       3       3       2       2
+## Club.5       0      1       0       1       1       0
+## Club.6       1      0       0       0       0       1
+## Club.7       0      1       1       0       0       0
+## Club.8       4      0       1       0       0       0
+## Club.9       0      6       0       0       1       1
+## Club.10      1      0       3       1       0       0
+## Club.11      0      0       1       4       2       1
+## Club.12      0      1       0       2       5       2
+## Club.13      0      1       0       1       2       5
+## Club.14      1      0       0       0       0       1
+## Club.15      1      1       0       3       3       3
+##         Club.14 Club.15
+## Club.1        0       1
+## Club.2        2       6
+## Club.3        3       8
+## Club.4        0       4
+## Club.5        0       1
+## Club.6        1       3
+## Club.7        0       0
+## Club.8        1       1
+## Club.9        0       1
+## Club.10       0       0
+## Club.11       0       3
+## Club.12       0       3
+## Club.13       1       3
+## Club.14       3       0
+## Club.15       0       9
+```
+
+---
+
+# One-mode projections of affiliation networks (cont'd)
+
+In edgelist notation, this can simply be achieved by *merging the dataset with itself*.
+
+CEO to CEO connections:
+
+
+```r
+#from column is CEOs, to column is clubs 
+df_ceo_edgelist1 = merge(df_ceo_edgelist,df_ceo_edgelist, by= "to",
+                         allow.cartesian=TRUE)
+df_ceo_edgelist1 = df_ceo_edgelist1[, .(from.x,from.y)]
+df_ceo_edgelist1 = df_ceo_edgelist1[, .N, by = c("from.x", "from.y")]
+```
+
+---
+
+
+# One-mode projections of affiliation networks (cont'd)
+
+Club to club connections:
+
+
+```r
+#from column is CEOs, to column is clubs 
+df_ceo_edgelist1 = merge(df_ceo_edgelist,df_ceo_edgelist, by= "from",
+                         allow.cartesian=TRUE)
+df_ceo_edgelist1 = df_ceo_edgelist1[, .(to.x,to.y)]
+df_ceo_edgelist1 = df_ceo_edgelist1[, .N, by = c("to.x", "to.y")]
+```
+---
+
+class: inverse, center, middle
+
+# Thanks!
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
