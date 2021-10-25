@@ -2,7 +2,7 @@
 title: "Social Network Analysis"
 subtitle: "Session 01<br/>Data Structures"
 author: "Meltem Odabaş"
-institute: "Pew Research Center"
+institute: ""
 date: "2021-10-26 <br/>(updated: `r Sys.Date()`)"
 output:
   xaringan::moon_reader:
@@ -12,8 +12,6 @@ output:
       highlightLines: true
       countIncrementalSlides: false
 ---
-
-background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
 
 ```{r setup, include=FALSE}
 options(htmltools.dir.version = FALSE)
@@ -370,13 +368,11 @@ rather than using the edge weights, let's use colors to define "love" and "hate"
 ```{r plot-hate-to-graph-medici}
 #for all ties, first assign the color red, which is for hate.
 edge_colors = rep("red", length(M_sp[M_sp == 1]))
-edge_colors
+edge_colors[1:10]
 #change the value to "green" where random_values_v2 equals 1
 edge_colors[random_values_v2 == 1] = "green" 
-edge_colors
-random_values_v2
-
-
+edge_colors[1:10]
+random_values_v2[1:10]
 g_hitech_hatred = graph_from_adjacency_matrix(M_sp_hatred, 
                                                 mode = "directed", weighted = TRUE)
 ```
@@ -719,6 +715,7 @@ df_ceo_edgelist1 = merge(df_ceo_edgelist,df_ceo_edgelist, by= "to",
                          allow.cartesian=TRUE)
 df_ceo_edgelist1 = df_ceo_edgelist1[, .(from.x,from.y)]
 df_ceo_edgelist1 = df_ceo_edgelist1[, .N, by = c("from.x", "from.y")]
+df_ceo_edgelist1
 ```
 
 ---
@@ -730,10 +727,72 @@ Club to club connections:
 
 ```{r edgelist-merge2}
 #from column is CEOs, to column is clubs 
-df_ceo_edgelist1 = merge(df_ceo_edgelist,df_ceo_edgelist, by= "from",
+df_ceo_edgelist2 = merge(df_ceo_edgelist,df_ceo_edgelist, by= "from",
                          allow.cartesian=TRUE)
-df_ceo_edgelist1 = df_ceo_edgelist1[, .(to.x,to.y)]
-df_ceo_edgelist1 = df_ceo_edgelist1[, .N, by = c("to.x", "to.y")]
+df_ceo_edgelist2 = df_ceo_edgelist2[, .(to.x,to.y)]
+df_ceo_edgelist2 = df_ceo_edgelist2[, .N, by = c("to.x", "to.y")]
+df_ceo_edgelist2
+```
+---
+
+class: inverse, center, middle
+
+# COMING UP NEXT...
+
+---
+
+## Network Centralities
+
+```{r medici, echo = FALSE, fig.width =14, warning = FALSE}
+M_medici = read.table(file.path(bucket, "data","flo.txt"),
+                 header=TRUE,row.names=1)
+M_medici = as.matrix(M_medici)
+
+g_medici = graph_from_adjacency_matrix(M_medici, mode = "undirected")
+l2 = layout.fruchterman.reingold(g_medici)
+V(g_medici)$degree = degree(g_medici)
+g_medici = delete_vertices(g_medici, V(g_medici)[V(g_medici)$degree== 0])
+V(g_medici)$betweenness = betweenness(g_medici)
+V(g_medici)$closeness = closeness(g_medici)
+V(g_medici)$eigen = unlist(eigen_centrality(g_medici)$vector)
+
+par(mfrow=c(1,3))
+plot(g_medici, vertex.size = V(g_medici)$degree*2^2, main = "Betweenness", layout = l2)
+plot(g_medici, vertex.size = V(g_medici)$closeness*3^6, main = "Closeness", layout = l2)
+plot(g_medici, vertex.size = V(g_medici)$eigen*5^2, main = "Eigenvector", layout = l2)
+```
+
+---
+
+
+## Communities
+
+```{r medici2, echo = FALSE, fig.width =14}
+V(g_medici)$com.walktrap = walktrap.community(g_medici)$membership
+V(g_medici)$com.spinglass = spinglass.community(g_medici)$membership
+V(g_medici)$com.louvain = cluster_louvain(g_medici)$membership
+
+node_colors = c("red", "green", "blue", "yellow")
+
+colors_w = rep(node_colors[1], length(V(g_medici)))
+for (i in 2:length(unique(V(g_medici)$com.walktrap))){
+  colors_w[V(g_medici)$com.walktrap == i] = node_colors[i]
+}
+
+colors_sp = rep(node_colors[1], length(V(g_medici)))
+for (i in 2:length(unique(V(g_medici)$com.walktrap))){
+  colors_sp[V(g_medici)$com.walktrap == i] = node_colors[i]
+}
+
+colors_lv = rep(node_colors[1], length(V(g_medici)))
+for (i in 2:length(unique(V(g_medici)$com.walktrap))){
+  colors_lv[V(g_medici)$com.walktrap == i] = node_colors[i]
+}
+
+par(mfrow=c(1,3))
+plot(g_medici, vertex.color = colors_w, main = "Walktrap", layout = l2)
+plot(g_medici, vertex.color = colors_sp, main = "Spinglass", layout = l2)
+plot(g_medici, vertex.color = colors_lv, main = "Louvain", layout = l2)
 ```
 ---
 
@@ -741,5 +800,6 @@ class: inverse, center, middle
 
 # Thanks!
 
+---
 
 
